@@ -221,9 +221,45 @@
   }
 
   /* ---- IDEA INPUT ---- */
-  .idea-section {
-    margin-bottom: 28px;
+  .idea-section { margin-bottom: 28px; }
+
+  .section-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
   }
+
+  .ideas-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .ideas-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ideas-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .ideas-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+  .idea-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .idea-card:hover { border-color: var(--accent); background: rgba(200,241,53,0.03); }
+  .idea-card.selected { border-color: var(--accent); }
+  .idea-card-num { font-size: 10px; color: var(--accent); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
+  .idea-card-title { font-size: 12px; color: var(--text); line-height: 1.5; margin-bottom: 3px; }
+  .idea-card-why { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
   .idea-textarea {
     width: 100%;
@@ -585,7 +621,17 @@
 
   <!-- IDEA INPUT -->
   <div class="idea-section">
-    <div class="section-label">заметки на сегодня</div>
+    <div class="section-label-row">
+      <div class="section-label" style="margin-bottom:0;">заметки на сегодня</div>
+      <button class="ideas-btn" id="ideasBtn">
+        <span class="ideas-btn-text">✦ найти идеи</span>
+        <span class="spinner" id="ideasSpinner"></span>
+      </button>
+    </div>
+
+    <!-- IDEAS CARDS -->
+    <div id="ideasContainer"></div>
+
     <textarea
       class="idea-textarea"
       id="ideaInput"
@@ -684,8 +730,7 @@ let generating = false;
 // INIT
 // ──────────────────────────────────────────
 function init() {
-  localStorage.setItem(keyStorageKey('openrouter'), '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');
-  localStorage.setItem(PROVIDER_KEY, 'openrouter');
+  if (!localStorage.getItem(PROVIDER_KEY)) localStorage.setItem(PROVIDER_KEY, 'openrouter');
 
   setDate();
   loadPosts();
@@ -700,6 +745,7 @@ function init() {
   document.getElementById('generateBtn').addEventListener('click', handleGenerate);
   document.getElementById('regenBtn').addEventListener('click', handleGenerate);
   document.getElementById('addPostBtn').addEventListener('click', addEmptyPost);
+  document.getElementById('ideasBtn').addEventListener('click', handleFindIdeas);
   document.getElementById('apiKeyInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') saveApiKey();
   });
@@ -970,6 +1016,86 @@ function addEmptyPost() {
 
 function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ──────────────────────────────────────────
+// FIND IDEAS
+// ──────────────────────────────────────────
+async function handleFindIdeas() {
+  const provider = currentProvider();
+  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  if (!apiKey) {
+    document.getElementById('apiMsg').textContent = 'добавь api ключ в настройках ⚙';
+    document.getElementById('settingsPanel').classList.add('open');
+    return;
+  }
+
+  const btn = document.getElementById('ideasBtn');
+  const spinner = document.getElementById('ideasSpinner');
+  const label = btn.querySelector('.ideas-btn-text');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  label.style.display = 'none';
+  hideError();
+
+  try {
+    const today = new Date().toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+    const raw = await callOpenRouter(
+      apiKey,
+      'perplexity/sonar',
+      [{ role: 'user', content:
+        `Today is ${today}. You are helping a crypto/AI builder find ideas for Twitter posts.
+
+Generate 3 simple, practical post ideas based on what's actually happening right now in AI and crypto tools. Think: "found this tool", "comparing X vs Y models", "tested this approach", "noticed this pattern", etc.
+
+Each idea should feel like something a builder would naturally share — not news commentary, just practical observations.
+
+Return in Russian. Return ONLY valid JSON, no markdown:
+[{"title":"...","why":"..."},{"title":"...","why":"..."},{"title":"...","why":"..."}]
+
+title = сама идея для поста (одно предложение, от первого лица, например "нашёл инструмент который...")
+why = почему это актуально прямо сейчас (одно предложение)`
+      }],
+      600
+    );
+
+    const cleaned = raw.trim().replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/,'').trim();
+    const ideas = JSON.parse(cleaned);
+    renderIdeas(ideas);
+  } catch(e) {
+    showError(`не удалось найти идеи: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    label.style.display = 'inline';
+  }
+}
+
+function renderIdeas(ideas) {
+  const container = document.getElementById('ideasContainer');
+  container.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'ideas-grid';
+
+  ideas.forEach((idea, i) => {
+    const card = document.createElement('div');
+    card.className = 'idea-card';
+    card.innerHTML = `
+      <div class="idea-card-num">идея ${i + 1}</div>
+      <div class="idea-card-title">${idea.title}</div>
+      <div class="idea-card-why">${idea.why}</div>
+    `;
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.idea-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const ta = document.getElementById('ideaInput');
+      ta.value = `${idea.title}\n${idea.why}`;
+      ta.focus();
+    });
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
 }
 
 // ──────────────────────────────────────────
