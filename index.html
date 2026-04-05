@@ -1806,75 +1806,35 @@ function buildPrompt(idea, research = '') {
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `${authorLine}
+  return `You are a Twitter ghostwriter. ${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 Twitter posts in English. Copy this exact style:
+Write 2 posts IN ENGLISH.
 
----
-found manus ai this week and i can't go back
+The style: like you're telling a friend what happened or what you noticed. no lists, no bullet points, no numbered tips. just natural flowing text broken into short paragraphs.
 
-everyone said "it's just another AI agent"
-they were wrong
+Structure for each post:
+- opening line: one sentence that makes someone want to keep reading. specific, not vague
+- blank line
+- 3-5 short paragraphs that tell the story or explain the observation. each paragraph 1-3 lines. blank line between them
+- closing line: one sentence that lands the point or adds a twist
 
-what it actually does →
-gives it a task, goes off, comes back with results
-no hand-holding, no prompt babysitting
-just works
+Voice:
+- all lowercase
+- conversational, no hype
+- no hashtags, no bullet points, no numbered lists
+- no periods at end of sentences
+- write like you're texting someone smart — short sentences, real details, honest
 
-tested it on crypto research
-it opened tabs, read docs, compiled a report
-while i was doing something else
+post 1 = something you noticed, a take on what's happening, a situation you observed
+post 2 = something you built, tested, or figured out — a real update from your work
 
-the scary part →
-output was actually usable
-not "AI slop i need to rewrite"
-just... good
-
-still integrating it into openclaw
-but already replacing 2 hours of manual work per day
-
-if you're building agent pipelines and haven't tested it → do it now
----
-
-HOOK (first 2-3 lines — this is everything):
-- never start with a number
-- make the reader feel they're discovering a secret
-- can exaggerate for impact: "wall street is panicking", "found something that shouldn't exist", "i wasn't supposed to share this"
-- strong hooks: "everyone ignored this until it started printing money" / "this is either genius or completely insane" / "they laughed. then it worked"
-
-TENSION — every line must either:
-- reveal something unexpected
-- raise a question
-- show an opportunity being missed
-never write: "here's why this matters", "let me explain", "essentially", "in other words"
-instead: "but nobody's talking about this part", "that's not even the real alpha", "and here's where it gets interesting"
-
-NARRATIVE — position as scout finding alpha, not flexing:
-"stumbled on this", "found this", "someone showed me" — wonder over arrogance
-
-ENDING — pick one:
-- open question: "the question is — who else is doing this?"
-- teaser: "more on this tomorrow"
-- statement that lingers, not a summary
-
-FORMAT:
-- all lowercase, no hashtags, no periods at line ends
-- → for steps and reveals, but only where it adds something
-- specific details: tool names, numbers, what exactly happened
-- 500-700 characters per post
-- uneven rhythm — some lines 2-3 words, some longer
-- cut any line that doesn't add new information
-
-post 1 = from today's idea/notes
-post 2 = different thing, can be unrelated
-
-put exactly this between them on its own line:
+Separate the two posts with exactly this delimiter on its own line:
 ===POST2===
 
-no other markers, no json, no backticks.`;
+Write post 1 first, then the delimiter, then post 2. No other markers, no JSON, no backticks.`;
 }
 
 function parsePosts(raw) {
