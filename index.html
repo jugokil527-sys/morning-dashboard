@@ -1589,6 +1589,49 @@ async function handleGenerate() {
       console.log('[gen] got rawText length:', rawText?.length, '| preview:', rawText?.slice(0,100));
     }
 
+    // ── STEP 3: humanize
+    setStatus('🫀 humanize...');
+    try {
+      const humanizePrompt = `You are editing a Twitter post to make it sound less like AI and more like a real person wrote it.
+
+Rules:
+- keep the meaning and all the facts exactly the same
+- make it feel more natural, imperfect, human — like someone actually typed this
+- vary sentence rhythm, add small hesitations or asides if it fits
+- remove any AI-sounding phrases ("it's worth noting", "in today's world", "dive into", "leverage", "it's important to", etc.)
+- all lowercase, no hashtags
+- do NOT add new information
+- do NOT change the structure significantly
+
+The post to humanize:
+${rawText}
+
+Return the humanized version only — same delimiter ===POST2=== between posts if there are two. No other markers.`;
+
+      let humanized = '';
+      if (provider === 'anthropic') {
+        const cfg = PROVIDERS.anthropic;
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({ model: cfg.model, max_tokens: 4000, messages: [{ role: 'user', content: humanizePrompt }] }),
+        });
+        const data = await res.json();
+        if (res.ok) humanized = data?.content?.[0]?.text || '';
+      } else {
+        const cfg = PROVIDERS[provider];
+        humanized = await callOpenRouter(apiKey, cfg.model, [{ role: 'user', content: humanizePrompt }]);
+      }
+      if (humanized.trim()) rawText = humanized;
+    } catch(e) {
+      // humanize failed — use original
+    }
+
     parsePosts(rawText);
 
   } catch (err) {
