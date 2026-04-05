@@ -1551,30 +1551,14 @@ async function translatePost(idx) {
   btn.disabled = true;
 
   try {
-    const msg = [{ role: 'user', content:
-      `Translate this Twitter post to Russian. Keep the style: lowercase, punchy, builder voice, same line breaks. Return ONLY the translated text, nothing else.\n\n${original}`
-    }];
-
-    let translated = '';
-    if (provider === 'anthropic') {
-      const cfg = PROVIDERS.anthropic;
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model: cfg.model, max_tokens: 1500, messages: msg }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
-      translated = data?.content?.[0]?.text || '';
-    } else {
-      const cfg = PROVIDERS[provider];
-      translated = await callOpenRouter(apiKey, cfg.model, msg, 1500);
-    }
+    const res = await fetch('https://ru.libretranslate.com/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: original, source: 'en', target: 'ru' }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+    let translated = data.translatedText || '';
 
     if (!translated.trim()) {
       showError('перевод вернул пустой ответ — попробуй ещё раз');
