@@ -503,6 +503,44 @@
   .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
   .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
 
+  .edit-block {
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: none;
+  }
+  .edit-block.open { display: block; }
+  .edit-row {
+    display: flex;
+    gap: 8px;
+  }
+  .edit-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .edit-input:focus { border-color: var(--accent); }
+  .edit-input::placeholder { color: var(--muted); }
+  .edit-apply-btn {
+    background: var(--accent);
+    border: none;
+    color: #0a0a0a;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .edit-apply-btn:hover { opacity: 0.85; }
+  .edit-apply-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .translation-block {
     border-top: 1px solid var(--border);
     padding: 14px 16px;
@@ -1275,8 +1313,15 @@ function buildPostCard(text, idx) {
     <div class="post-card-footer">
       <span class="char-count" id="charCount${idx}"></span>
       <div style="display:flex;gap:6px;">
+        <button class="copy-btn" id="editToggleBtn${idx}">редактировать</button>
         <button class="copy-btn" id="translateBtn${idx}">RU</button>
         <button class="copy-btn" id="copyBtn${idx}">копировать</button>
+      </div>
+    </div>
+    <div class="edit-block" id="editBlock${idx}">
+      <div class="edit-row">
+        <input class="edit-input" id="editInput${idx}" placeholder="что изменить? например: сделай короче, добавь цифры, смени тон..." />
+        <button class="edit-apply-btn" id="editApplyBtn${idx}">→</button>
       </div>
     </div>
   `;
@@ -1303,6 +1348,19 @@ function buildPostCard(text, idx) {
     ta.style.height = ta.scrollHeight + 'px';
     updateCount();
   }, 0);
+
+  // edit toggle
+  const editToggleBtn = card.querySelector(`#editToggleBtn${idx}`);
+  const editBlock = card.querySelector(`#editBlock${idx}`);
+  const editInput = card.querySelector(`#editInput${idx}`);
+  const editApplyBtn = card.querySelector(`#editApplyBtn${idx}`);
+  editToggleBtn.addEventListener('click', () => {
+    const open = editBlock.classList.toggle('open');
+    editToggleBtn.classList.toggle('copied', open);
+    if (open) editInput.focus();
+  });
+  editApplyBtn.addEventListener('click', () => editPost(idx));
+  editInput.addEventListener('keydown', e => { if (e.key === 'Enter') editPost(idx); });
 
   // translate btn
   const translateBtn = card.querySelector(`#translateBtn${idx}`);
@@ -1613,6 +1671,71 @@ async function translatePost(idx) {
   }
 }
 
+async function editPost(idx) {
+  const provider = currentProvider();
+  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  if (!apiKey) { showError('добавь api ключ в настройках ⚙'); return; }
+
+  const ta = document.getElementById(`postText${idx}`);
+  const input = document.getElementById(`editInput${idx}`);
+  const btn = document.getElementById(`editApplyBtn${idx}`);
+  if (!ta || !input || !btn) return;
+
+  const currentText = ta.value.trim();
+  const instruction = input.value.trim();
+  if (!instruction) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const msg = [{ role: 'user', content:
+      `Here is a Twitter post:\n\n${currentText}\n\nEdit instruction: ${instruction}\n\nRewrite the post applying this edit. Keep the same voice and style. Return ONLY the rewritten post text, nothing else.`
+    }];
+
+    let result = '';
+    if (provider === 'anthropic') {
+      const cfg = PROVIDERS.anthropic;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 2000, messages: msg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
+      result = data?.content?.[0]?.text || '';
+    } else {
+      const cfg = PROVIDERS[provider];
+      result = await callOpenRouter(apiKey, cfg.model, msg, 2000);
+    }
+
+    if (!result.trim()) throw new Error('пустой ответ');
+
+    ta.value = result.trim();
+    posts[idx] = result.trim();
+    savePosts();
+    input.value = '';
+    requestAnimationFrame(() => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+
+    // flash green on textarea border
+    ta.style.borderColor = 'var(--accent)';
+    setTimeout(() => ta.style.borderColor = '', 1000);
+  } catch(e) {
+    showError(`ошибка редактирования: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '→';
+  }
+}
+
 function buildPrompt(idea, research = '') {
   const dateStr = new Date().toLocaleDateString('ru-RU', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   const profile = localStorage.getItem(PROFILE_KEY) || '';
@@ -1631,48 +1754,27 @@ function buildPrompt(idea, research = '') {
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts IN ENGLISH. Each has a different format:
+Write 2 posts IN ENGLISH.
 
-━━━ POST 1 FORMAT: narrative hot take ━━━
-Structure:
-- LINE 1: one punchy declarative statement. news headline energy, no fluff
-- BLANK LINE
-- 2-3 lines of context or opinion. short sentences. state the implication directly
-- BLANK LINE
-- narrative block using "> " prefix on each line (8-14 lines):
-  each line = 5-10 words max
-  tell a story or build an argument line by line
-  start relatable, escalate tension, end with irony or a gut punch
-  use real numbers, names, specifics
-  the last line should echo or twist the first line of the post
-- no hashtags, no periods at end of lines
+The style: like you're telling a friend what happened or what you noticed. no lists, no bullet points, no numbered tips. just natural flowing text broken into short paragraphs.
 
-Example of the "> " block style:
-> you trust the "safest AI company"
-> they build a $2.5B product
-> one rookie mistake in a config file
-> everything leaks overnight
-> "safest AI company"
+Structure for each post:
+- opening line: one sentence that makes someone want to keep reading. specific, not vague
+- blank line
+- 3-5 short paragraphs that tell the story or explain the observation. each paragraph 1-3 lines. blank line between them
+- closing line: one sentence that lands the point or adds a twist
 
-━━━ POST 2 FORMAT: educational/builder insight ━━━
-Structure:
-- HOOK (1-2 lines): specific number or surprising personal realization
-- BLANK LINE
-- BODY: 5-8 short paragraphs, blank line between each
-  lead each paragraph with the wrong assumption → then the fix
-  use real numbers, formulas, percentages
-  end each point with one punchy closing line
-- BLANK LINE
-- ENDING (1-2 lines): one sentence that reframes the whole post
-
-Voice for both:
+Voice:
 - all lowercase
-- no hashtags
+- conversational, no hype
+- no hashtags, no bullet points, no numbered lists
 - no periods at end of sentences
-- no hype words ("game-changer", "revolutionary", "huge")
-- specific over vague — real names, real numbers
+- write like you're texting someone smart — short sentences, real details, honest
 
-Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n between paragraphs, \\n between "> " lines:
+post 1 = something you noticed, a take on what's happening, a situation you observed
+post 2 = something you built, tested, or figured out — a real update from your work
+
+Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n between paragraphs:
 {"post1":"...","post2":"..."}`;
 }
 
