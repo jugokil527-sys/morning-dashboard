@@ -1517,6 +1517,7 @@ async function callOpenRouter(apiKey, model, messages, maxTokens = 4000) {
 async function handleGenerate() {
   const provider = currentProvider();
   const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  console.log('[gen] provider:', provider, '| hasKey:', !!apiKey, '| generating:', generating);
   if (!apiKey) {
     document.getElementById('apiMsg').textContent = 'добавь api ключ в настройках ⚙';
     document.getElementById('settingsPanel').classList.add('open');
