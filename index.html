@@ -1631,38 +1631,49 @@ function buildPrompt(idea, research = '') {
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts IN ENGLISH following this exact 3-part structure:
+Write 2 posts IN ENGLISH. Each has a different format:
 
-HOOK (1-2 lines):
-- specific number or surprising claim up front
-- personal angle — "I used to do X wrong" or "most people miss this"
-- no clickbait, no "this will change your life"
-- examples: "I stopped doing X — here's what changed", "X things I learned after Y", "most people do X wrong. I did too."
+━━━ POST 1 FORMAT: narrative hot take ━━━
+Structure:
+- LINE 1: one punchy declarative statement. news headline energy, no fluff
+- BLANK LINE
+- 2-3 lines of context or opinion. short sentences. state the implication directly
+- BLANK LINE
+- narrative block using "> " prefix on each line (8-14 lines):
+  each line = 5-10 words max
+  tell a story or build an argument line by line
+  start relatable, escalate tension, end with irony or a gut punch
+  use real numbers, names, specifics
+  the last line should echo or twist the first line of the post
+- no hashtags, no periods at end of lines
 
-BODY (6-10 paragraphs):
-- each paragraph = 1-3 lines, blank line between them
-- lead with the anti-pattern or wrong assumption people have
-- then give the specific fix or insight
-- use real numbers, formulas, percentages when possible
-- end each point with one punchy line that closes the thought
-- → only for actual step-by-step lists, not decoration
+Example of the "> " block style:
+> you trust the "safest AI company"
+> they build a $2.5B product
+> one rookie mistake in a config file
+> everything leaks overnight
+> "safest AI company"
 
-ENDING (1-2 lines):
-- one sentence that reframes the whole post
-- a conclusion that makes the reader feel like they just learned something they can use today
+━━━ POST 2 FORMAT: educational/builder insight ━━━
+Structure:
+- HOOK (1-2 lines): specific number or surprising personal realization
+- BLANK LINE
+- BODY: 5-8 short paragraphs, blank line between each
+  lead each paragraph with the wrong assumption → then the fix
+  use real numbers, formulas, percentages
+  end each point with one punchy closing line
+- BLANK LINE
+- ENDING (1-2 lines): one sentence that reframes the whole post
 
-Voice:
-- plain english, no hype words ("game-changer", "revolutionary", "huge")
+Voice for both:
 - all lowercase
 - no hashtags
 - no periods at end of sentences
-- write like you're explaining to a smart friend who has 2 minutes
+- no hype words ("game-changer", "revolutionary", "huge")
+- specific over vague — real names, real numbers
 
-post 1 = educational/insight post (numbered tips or key observations)
-post 2 = builder update — what you tested, what broke, what you found
-
-Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n between paragraphs:
-{"post1":"hook\\n\\nbody\\n\\nending","post2":"hook\\n\\nbody\\n\\nending"}`;
+Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n between paragraphs, \\n between "> " lines:
+{"post1":"...","post2":"..."}`;
 }
 
 function parsePosts(raw) {
