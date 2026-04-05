@@ -1760,35 +1760,29 @@ function buildPrompt(idea, research = '') {
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `Write 2 Twitter posts IN ENGLISH for a crypto/AI builder. ${authorLine}
+  return `Write 2 Twitter posts IN ENGLISH. ${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Each post: 300-400 CHARACTERS max (not words — characters). Short. Punchy.
+vibe: like a guy texting a friend about something he noticed. lowercase, no hashtags, no fluff. just the thing itself.
 
-The hook is everything. First line must stop the scroll — surprising, specific, or slightly uncomfortable. Not a question. Not "I". Not a generic observation.
+each post is 300-400 characters. first line is the hook — it makes you keep reading. not a question, not "I did X", something that already has a point of view or sounds slightly off or real.
 
-Good hook examples:
+after the hook: 2-3 lines that pay it off naturally. no lesson, no wrap-up, just lands.
+
+like these:
 "nobody talks about how much time you waste switching between ai tools"
 "tried deleting my to-do app for a week. still got everything done"
-"the best productivity hack is just doing the thing at 6am before your brain turns on"
+"running two agents in parallel feels illegal. saves like 40 min a day"
 
-After the hook: 2-3 short lines that pay it off. concrete detail, what actually happened, honest reaction. no conclusion, no lesson, just land it.
+post 1 = from today's idea
+post 2 = something else small, can be unrelated
 
-Rules:
-- all lowercase
-- no hashtags, no bullet points
-- no "game-changer", no "unlock", no "here's why"
-- don't summarize, don't moralize
-
-post 1 = from today's notes/idea
-post 2 = different small thing, unrelated is fine
-
-Separate with exactly this on its own line:
+put exactly this between them:
 ===POST2===
 
-Post 1 first, then delimiter, then post 2. No other markers, no JSON, no backticks.`;
+no other markers, no json, no backticks.`;
 }
 
 function parsePosts(raw) {
