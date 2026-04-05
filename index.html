@@ -1807,32 +1807,50 @@ function buildPrompt(idea, research = '') {
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 Twitter posts in English. Match this exact style — read these examples carefully:
+Write 2 Twitter posts in English. Copy this exact style:
 
 ---
-been using perplexity for research instead of google for a month now. it's not perfect but i stopped opening 7 tabs at once. that alone is worth it
+found manus ai this week and i can't go back
 
-the weird thing is i trust it less than google but use it more. something about getting one answer instead of ten links just moves things faster
+everyone said "it's just another AI agent"
+they were wrong
+
+what it actually does →
+gives it a task, goes off, comes back with results
+no hand-holding, no prompt babysitting
+just works
+
+tested it on crypto research
+it opened tabs, read docs, compiled a report
+while i was doing something else
+
+the scary part →
+output was actually usable
+not "AI slop i need to rewrite"
+just... good
+
+still integrating it into openclaw
+but already replacing 2 hours of manual work per day
+
+if you're building agent pipelines and haven't tested it → do it now
 ---
 
----
-tried timeboxing my mornings this week. 90 min of real work before i open slack or twitter
+Notice the structure:
+- hook first line: short, creates tension or curiosity, makes you want to read on
+- then short lines, one thought each
+- use → for reveals and transitions
+- build up to "the scary part" or "the weird thing" or "what actually happened"
+- end with something concrete, not a lesson
 
-first two days were great. third day i checked twitter at 8am out of habit and the whole thing fell apart. still trying
----
-
----
-built a small script to summarize my weekly notes into a single doc. took 2 hours. now i actually read my old notes which i never did before
-
-not sure if the summary is good or if i just like having fewer things open
----
-
-Each post: 500-700 characters. Short sentences. No conclusions or lessons. Specific small details. Honest about what didn't work. Lowercase. No hashtags. Reads like a real person thinking out loud.
-
-NEVER use: "it's worth noting", "in today's world", "game-changer", "leverage", "unlock", "dive into", "crucial", "it's important to"
+Rules:
+- mostly lowercase
+- no periods at line ends
+- no hashtags
+- specific details (tool names, time saved, what exactly happened)
+- 500-700 characters per post
 
 post 1 = from today's idea/notes
-post 2 = different small thing, can be unrelated
+post 2 = different thing, can be unrelated
 
 put exactly this between them on its own line:
 ===POST2===
