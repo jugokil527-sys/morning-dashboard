@@ -129,6 +129,7 @@
 
   .settings-input:focus { border-color: var(--accent); }
   select.settings-input option { background: var(--surface); color: var(--text); }
+  .profile-textarea { width:100%; font-family:'Space Mono',monospace; font-size:12px; display:block; }
 
   .save-btn {
     background: var(--accent);
@@ -679,6 +680,16 @@
       <button class="save-btn" id="saveKeyBtn">сохранить</button>
     </div>
     <div class="settings-status" id="settingsStatus"></div>
+
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+      <div class="settings-label">о себе — для персональных идей</div>
+      <textarea class="settings-input profile-textarea" id="profileInput" placeholder="пишу про openclaw, строю агентов..." style="min-height:60px;resize:vertical;line-height:1.5;padding:10px 12px;"></textarea>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+        <button class="regen-btn" id="expandProfileBtn" style="font-size:11px;padding:6px 12px;">✦ дополнить ии</button>
+        <button class="save-btn" id="saveProfileBtn">сохранить</button>
+      </div>
+      <div class="settings-status" id="profileStatus"></div>
+    </div>
   </div>
 
   <!-- STATS ROW -->
@@ -825,6 +836,20 @@ const POST_TIMES = ['9:00–11:00 UTC', '13:00–15:00 UTC'];
 let checkState = {};
 const POSTS_KEY = `posts_${TODAY}`;
 const ARCHIVE_KEY = 'posts_archive';
+const PROFILE_KEY = 'user_profile';
+
+const IDEA_ANGLES = [
+  'нашёл инструмент который',
+  'сравниваю два подхода:',
+  'запустил эксперимент —',
+  'заметил паттерн:',
+  'провальный подход который я тестировал:',
+  'неочевидный способ использовать',
+  'что изменилось в моём воркфлоу после',
+  'честный разбор:',
+  'попробовал новую модель для',
+  'почему большинство делает это неправильно:',
+];
 let posts = [];
 let generating = false;
 
@@ -850,6 +875,8 @@ function init() {
   document.getElementById('addPostBtn').addEventListener('click', addEmptyPost);
   document.getElementById('ideasBtn').addEventListener('click', handleFindIdeas);
   document.getElementById('archiveToggleBtn').addEventListener('click', toggleArchive);
+  document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+  document.getElementById('expandProfileBtn').addEventListener('click', expandProfile);
   document.getElementById('archiveClearBtn').addEventListener('click', () => {
     if (confirm('Очистить весь архив?')) {
       localStorage.removeItem(ARCHIVE_KEY);
@@ -899,7 +926,51 @@ function toggleSettings() {
     const p = currentProvider();
     document.getElementById('providerSelect').value = p;
     syncProviderUI(p);
+    document.getElementById('profileInput').value = localStorage.getItem(PROFILE_KEY) || '';
+    document.getElementById('profileStatus').textContent = '';
     document.getElementById('apiKeyInput').focus();
+  }
+}
+
+function saveProfile() {
+  const val = document.getElementById('profileInput').value.trim();
+  localStorage.setItem(PROFILE_KEY, val);
+  const el = document.getElementById('profileStatus');
+  el.textContent = '✓ сохранено';
+  el.className = 'settings-status ok';
+}
+
+async function expandProfile() {
+  const apiKey = (localStorage.getItem(keyStorageKey(currentProvider())) || '').trim();
+  if (!apiKey) { document.getElementById('profileStatus').textContent = 'сначала добавь api ключ'; return; }
+
+  const ta = document.getElementById('profileInput');
+  const btn = document.getElementById('expandProfileBtn');
+  const short = ta.value.trim();
+  if (!short) { ta.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const expanded = await callOpenRouter(
+      apiKey,
+      PROVIDERS[currentProvider()].model,
+      [{ role: 'user', content:
+        `A Twitter user wrote this brief self-description: "${short}"
+
+Expand it into 2-3 sentences that paint a clear picture of who they are, what they build, what they're interested in, and what angle they write from on Twitter. Keep it factual, first person, no hype. Write in Russian.
+
+Return ONLY the expanded description, nothing else.`
+      }],
+      300
+    );
+    ta.value = expanded.trim();
+  } catch(e) {
+    document.getElementById('profileStatus').textContent = `ошибка: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ дополнить ии';
   }
 }
 
@@ -1255,20 +1326,30 @@ async function handleFindIdeas() {
 
   try {
     const today = new Date().toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+    const profile = localStorage.getItem(PROFILE_KEY) || '';
+    const profileLine = profile ? `\n\nAbout this user: ${profile}` : '';
+
+    // pick 3 random unique angles
+    const shuffled = [...IDEA_ANGLES].sort(() => Math.random() - 0.5);
+    const angles = shuffled.slice(0, 3);
+
     const raw = await callOpenRouter(
       apiKey,
       'perplexity/sonar',
       [{ role: 'user', content:
-        `Today is ${today}. Search the web for what actually happened in the last 24-48 hours in AI and crypto.
+        `Today is ${today}. Search the web for what actually happened in the last 24-48 hours in AI and crypto.${profileLine}
 
-Find 3 specific things: new model releases, new tools launched, interesting benchmark results, notable experiments people shared, price moves with context, protocol updates. Use real names — specific model names, tool names, numbers.
+Find 3 specific recent things: new model releases, new tools launched, benchmark results, notable experiments, protocol updates. Use real names — specific model names, tool names, numbers.
 
-Then turn each into a Twitter post idea for a crypto/AI builder who builds agents and tests tools hands-on.
+Frame each idea using one of these angles (use each angle once, in this order):
+1. "${angles[0]}"
+2. "${angles[1]}"
+3. "${angles[2]}"
 
 Return in Russian. Return ONLY valid JSON array, no markdown, no explanation:
 [{"title":"...","why":"..."},{"title":"...","why":"..."},{"title":"...","why":"..."}]
 
-title = идея поста от первого лица с конкретным названием (например: "потестил новый Claude 3.7 на задачах ресёрча — вот что нашёл")
+title = идея поста от первого лица, начинается с заданного угла, включает конкретное название инструмента/модели
 why = одна конкретная причина почему это важно прямо сейчас, с фактом или цифрой`
       }],
       600
@@ -1474,14 +1555,18 @@ async function translatePost(idx) {
 
 function buildPrompt(idea, research = '') {
   const dateStr = new Date().toLocaleDateString('ru-RU', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const profile = localStorage.getItem(PROFILE_KEY) || '';
+  const authorLine = profile
+    ? `About the author: ${profile}`
+    : `Author: crypto/AI builder working on OpenClaw, a multi-agent research & content system.`;
   const ideaLine = idea
-    ? `Maloy's notes: "${idea}"`
-    : `No notes — use general context: OpenClaw, AI tools, crypto, building in public.`;
+    ? `Today's notes: "${idea}"`
+    : `No notes — use general context from the author's profile.`;
   const researchLine = research
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `You are writing Twitter posts for Maloy — a crypto/AI builder working on OpenClaw, a multi-agent system for research and content.
+  return `You are a Twitter ghostwriter. ${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
