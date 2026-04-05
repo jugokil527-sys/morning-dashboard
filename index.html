@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>morning.exe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1e1e1e;
+    --accent: #c8f135;
+    --accent2: #f13567;
+    --text: #e8e8e8;
+    --muted: #555555;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; font-size: 13px; }
+
+  body {
+    min-height: 100vh;
+    padding: 24px 16px 64px;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--muted);
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
+    letter-spacing: 0;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .date-tag {
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .gear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .gear-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- SETTINGS PANEL ---- */
+  .settings-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .settings-panel.open { display: block; }
+
+  .settings-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .settings-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .settings-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .settings-input:focus { border-color: var(--accent); }
+  select.settings-input option { background: var(--surface); color: var(--text); }
+
+  .save-btn {
+    background: var(--accent);
+    border: none;
+    color: #0a0a0a;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .save-btn:hover { opacity: 0.85; }
+
+  .settings-status {
+    font-size: 11px;
+    margin-top: 8px;
+    color: var(--muted);
+  }
+
+  .settings-status.ok { color: var(--accent); }
+
+  /* ---- STATS ROW ---- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ---- PROGRESS BAR ---- */
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    width: 100%;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* ---- SECTION LABEL ---- */
+  .section-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ---- IDEA INPUT ---- */
+  .idea-section {
+    margin-bottom: 28px;
+  }
+
+  .idea-textarea {
+    width: 100%;
+    min-height: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    padding: 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .idea-textarea:focus { border-color: var(--accent); }
+  .idea-textarea::placeholder { color: var(--muted); }
+
+  .idea-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .api-msg {
+    font-size: 11px;
+    color: var(--accent2);
+    flex: 1;
+  }
+
+  .generate-btn {
+    background: var(--accent);
+    border: none;
+    color: #0a0a0a;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .generate-btn:hover { opacity: 0.85; }
+  .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .spinner {
+    display: none;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #0a0a0a;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .generating .spinner { display: block; }
+  .generating .btn-arrow { display: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- CHECKLIST ---- */
+  .checklist-section {
+    margin-bottom: 28px;
+  }
+
+  .checklist {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+  }
+
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item:hover { background: rgba(200,241,53,0.03); }
+
+  .checklist-item.done .item-text {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .check-box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .checklist-item.done .check-box {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #0a0a0a;
+  }
+
+  .item-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+  }
+
+  .tag-утро { color: var(--accent); border: 1px solid var(--accent); }
+  .tag-вечер { color: var(--accent2); border: 1px solid var(--accent2); }
+  .tag-день { color: var(--muted); border: 1px solid var(--border); }
+  .tag-итог { color: var(--muted); border: 1px solid var(--border); }
+
+  .item-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+    flex: 1;
+    transition: color 0.15s;
+  }
+
+  /* ---- POSTS SECTION ---- */
+  .posts-section {
+    margin-bottom: 28px;
+  }
+
+  /* ---- EMPTY STATE ---- */
+  .empty-state {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .empty-symbol {
+    font-family: 'Syne', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--border);
+    margin-bottom: 12px;
+  }
+
+  .empty-hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ---- POST CARD ---- */
+  .posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .post-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .post-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .post-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .post-time-hint {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .post-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    padding: 16px;
+    resize: none;
+    outline: none;
+    line-height: 1.7;
+    min-height: 160px;
+  }
+
+  .post-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .char-count {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .char-count.over { color: var(--accent2); }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+
+  .posts-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .regen-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .regen-btn:hover { border-color: var(--text); color: var(--text); }
+  .regen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .add-post-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .add-post-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ---- ERROR ---- */
+  .error-box {
+    background: rgba(241, 53, 103, 0.08);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    font-size: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  /* ---- MOBILE ---- */
+  @media (max-width: 500px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat-value { font-size: 22px; }
+    .stat-label { font-size: 9px; }
+    .logo { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      morning.exe
+      <span>дашборд крипто/ai билдера</span>
+    </div>
+    <div class="header-right">
+      <div class="date-tag" id="dateTag"></div>
+      <button class="gear-btn" id="gearBtn" title="настройки">⚙</button>
+    </div>
+  </header>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-label">провайдер</div>
+    <div class="settings-row" style="margin-bottom:12px;">
+      <select class="settings-input" id="providerSelect" style="cursor:pointer;">
+        <option value="openrouter">OpenRouter — gemini-2.0-flash</option>
+        <option value="anthropic">Anthropic — Claude Sonnet</option>
+        <option value="deepseek">DeepSeek — deepseek-chat</option>
+        <option value="kimi">Kimi (Moonshot) — kimi-k2</option>
+        <option value="qwen">Qwen (Alibaba) — qwen-plus</option>
+      </select>
+    </div>
+    <div class="settings-label">api ключ</div>
+    <div class="settings-row">
+      <input type="password" class="settings-input" id="apiKeyInput" placeholder="" autocomplete="off">
+      <button class="save-btn" id="saveKeyBtn">сохранить</button>
+    </div>
+    <div class="settings-status" id="settingsStatus"></div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statDone">0</div>
+      <div class="stat-label">задач сделано</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statPosts">0</div>
+      <div class="stat-label">постов готово</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statPct">0%</div>
+      <div class="stat-label">прогресс</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span>дневной прогресс</span>
+      <span id="progressLabel">0 / 7</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- IDEA INPUT -->
+  <div class="idea-section">
+    <div class="section-label">заметки на сегодня</div>
+    <textarea
+      class="idea-textarea"
+      id="ideaInput"
+      placeholder="что происходит сегодня? находки, мысли, что тестировал..."
+    ></textarea>
+    <div class="idea-footer">
+      <span class="api-msg" id="apiMsg"></span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <span id="providerBadge" style="font-size:10px;color:var(--muted);letter-spacing:0.5px;"></span>
+        <button class="generate-btn" id="generateBtn">
+          <span class="btn-arrow">→ генерировать</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="checklist-section">
+    <div class="section-label">ежедневный чеклист</div>
+    <div class="checklist" id="checklist"></div>
+  </div>
+
+  <!-- POSTS -->
+  <div class="posts-section">
+    <div class="section-label">посты</div>
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+    <div id="postsContainer"></div>
+    <div class="posts-actions" id="postsActions" style="display:none;">
+      <button class="regen-btn" id="regenBtn">↻ перегенерировать</button>
+      <button class="add-post-btn" id="addPostBtn">+ добавить пост</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ──────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────
+const TODAY = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+const CHECKLIST_KEY = `checklist_${TODAY}`;
+const PROVIDER_KEY = 'ai_provider';
+
+const PROVIDERS = {
+  openrouter: {
+    name: 'OpenRouter',
+    placeholder: 'sk-or-v1-...',
+    model: 'google/gemini-2.0-flash-001',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    extraHeaders: { 'HTTP-Referer': location.href, 'X-Title': 'morning.exe' },
+  },
+  anthropic: {
+    name: 'Anthropic',
+    placeholder: 'sk-ant-api03-...',
+    model: 'claude-sonnet-4-20250514',
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    placeholder: 'sk-...',
+    model: 'deepseek-chat',
+    endpoint: 'https://api.deepseek.com/v1/chat/completions',
+  },
+  kimi: {
+    name: 'Kimi',
+    placeholder: 'sk-...',
+    model: 'kimi-k2-0711-preview',
+    endpoint: 'https://api.moonshot.cn/v1/chat/completions',
+  },
+  qwen: {
+    name: 'Qwen',
+    placeholder: 'sk-...',
+    model: 'qwen-plus',
+    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  },
+};
+
+const CHECKLIST_ITEMS = [
+  { id: 'c1', tag: 'утро',  text: '10 комментариев под свежими постами из твоего списка' },
+  { id: 'c2', tag: 'утро',  text: 'пост 1 (9:00–11:00 UTC)' },
+  { id: 'c3', tag: 'день',  text: 'ещё 5 комментариев' },
+  { id: 'c4', tag: 'день',  text: 'пост 2 (через 3–4 часа после первого)' },
+  { id: 'c5', tag: 'вечер', text: 'ответить всем кто написал' },
+  { id: 'c6', tag: 'вечер', text: '5 финальных комментариев' },
+  { id: 'c7', tag: 'итог',  text: 'проверить аналитику — какой пост набрал больше показов' },
+];
+
+const POST_TIMES = ['9:00–11:00 UTC', '13:00–15:00 UTC'];
+
+let checkState = {};
+const POSTS_KEY = `posts_${TODAY}`;
+let posts = [];
+let generating = false;
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+function init() {
+  localStorage.setItem(keyStorageKey('openrouter'), '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');
+  localStorage.setItem(PROVIDER_KEY, 'openrouter');
+
+  setDate();
+  loadPosts();
+  loadCheckState();
+  renderChecklist();
+  renderStats();
+  renderPosts();
+  updateProviderBadge();
+
+  document.getElementById('gearBtn').addEventListener('click', toggleSettings);
+  document.getElementById('saveKeyBtn').addEventListener('click', saveApiKey);
+  document.getElementById('generateBtn').addEventListener('click', handleGenerate);
+  document.getElementById('regenBtn').addEventListener('click', handleGenerate);
+  document.getElementById('addPostBtn').addEventListener('click', addEmptyPost);
+  document.getElementById('apiKeyInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveApiKey();
+  });
+  document.getElementById('providerSelect').addEventListener('change', onProviderChange);
+}
+
+function setDate() {
+  const d = new Date();
+  const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+  document.getElementById('dateTag').textContent = d.toLocaleDateString('ru-RU', opts).toLowerCase();
+}
+
+function currentProvider() {
+  return localStorage.getItem(PROVIDER_KEY) || 'anthropic';
+}
+
+function onProviderChange() {
+  const p = document.getElementById('providerSelect').value;
+  syncProviderUI(p);
+}
+
+// ──────────────────────────────────────────
+// SETTINGS
+// ──────────────────────────────────────────
+
+// Always read provider from the <select> element when panel is open,
+// fall back to localStorage otherwise (for generate flow).
+function selectedProvider() {
+  const sel = document.getElementById('providerSelect');
+  return sel ? sel.value : currentProvider();
+}
+
+function keyStorageKey(provider) {
+  return `ai_api_key_${provider}`;
+}
+
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    const p = currentProvider();
+    document.getElementById('providerSelect').value = p;
+    syncProviderUI(p);
+    document.getElementById('apiKeyInput').focus();
+  }
+}
+
+function syncProviderUI(p) {
+  document.getElementById('apiKeyInput').placeholder = PROVIDERS[p].placeholder;
+  document.getElementById('apiKeyInput').value = localStorage.getItem(keyStorageKey(p)) || '';
+  updateSettingsStatus();
+}
+
+function saveApiKey() {
+  const p = selectedProvider();
+  const val = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem(PROVIDER_KEY, p);
+  localStorage.setItem(keyStorageKey(p), val);
+  updateSettingsStatus(true);
+  updateProviderBadge();
+  clearApiMsg();
+}
+
+function updateSettingsStatus(justSaved) {
+  const p = selectedProvider();
+  const cfg = PROVIDERS[p];
+  const key = localStorage.getItem(keyStorageKey(p)) || '';
+  const el = document.getElementById('settingsStatus');
+  if (justSaved) {
+    el.textContent = key
+      ? `✓ сохранено · ${cfg.name} / ${cfg.model}`
+      : `✓ ключ очищен · ${cfg.name}`;
+    el.className = 'settings-status ok';
+    return;
+  }
+  if (key) {
+    el.textContent = `${cfg.name} / ${cfg.model} · ключ: ${key.slice(0, 10)}...`;
+    el.className = 'settings-status ok';
+  } else {
+    el.textContent = `ключ не добавлен для ${cfg.name}`;
+    el.className = 'settings-status';
+  }
+}
+
+function updateProviderBadge() {
+  const p = currentProvider();
+  const cfg = PROVIDERS[p];
+  const hasKey = !!localStorage.getItem(keyStorageKey(p));
+  const badge = document.getElementById('providerBadge');
+  if (badge) badge.textContent = hasKey ? `${cfg.name} / ${cfg.model}` : '';
+}
+
+function clearApiMsg() {
+  document.getElementById('apiMsg').textContent = '';
+}
+
+// ──────────────────────────────────────────
+// POSTS PERSISTENCE
+// ──────────────────────────────────────────
+function loadPosts() {
+  try {
+    const stored = localStorage.getItem(POSTS_KEY);
+    if (stored) posts = JSON.parse(stored);
+  } catch(e) { posts = []; }
+}
+
+function savePosts() {
+  localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+}
+
+// CHECKLIST
+// ──────────────────────────────────────────
+function loadCheckState() {
+  const stored = localStorage.getItem(CHECKLIST_KEY);
+  if (stored) {
+    try { checkState = JSON.parse(stored); } catch(e) { checkState = {}; }
+  } else {
+    checkState = {};
+  }
+}
+
+function saveCheckState() {
+  localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checkState));
+}
+
+function renderChecklist() {
+  const container = document.getElementById('checklist');
+  container.innerHTML = '';
+  CHECKLIST_ITEMS.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'checklist-item' + (checkState[item.id] ? ' done' : '');
+    div.innerHTML = `
+      <div class="check-box">${checkState[item.id] ? '✓' : ''}</div>
+      <span class="item-tag tag-${item.tag}">${item.tag}</span>
+      <span class="item-text">${item.text}</span>
+    `;
+    div.addEventListener('click', () => toggleCheck(item.id));
+    container.appendChild(div);
+  });
+}
+
+function toggleCheck(id) {
+  checkState[id] = !checkState[id];
+  saveCheckState();
+  renderChecklist();
+  renderStats();
+}
+
+// ──────────────────────────────────────────
+// STATS + PROGRESS
+// ──────────────────────────────────────────
+function renderStats() {
+  const done = Object.values(checkState).filter(Boolean).length;
+  const total = CHECKLIST_ITEMS.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const postsReady = posts.filter(p => p && p.trim()).length;
+
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statPosts').textContent = postsReady;
+  document.getElementById('statPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${done} / ${total}`;
+}
+
+// ──────────────────────────────────────────
+// POSTS RENDER
+// ──────────────────────────────────────────
+function renderPosts() {
+  const container = document.getElementById('postsContainer');
+  const actions = document.getElementById('postsActions');
+
+  if (posts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-symbol">✦</div>
+        <div class="empty-hint">напиши заметки выше и нажми генерировать<br>твои посты появятся здесь</div>
+      </div>`;
+    actions.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'posts-grid';
+
+  posts.forEach((text, i) => {
+    const card = buildPostCard(text, i);
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+  actions.style.display = 'flex';
+  renderStats();
+}
+
+function buildPostCard(text, idx) {
+  const timeHint = POST_TIMES[idx] || '';
+  const card = document.createElement('div');
+  card.className = 'post-card';
+  card.innerHTML = `
+    <div class="post-card-header">
+      <div class="post-card-title">пост ${idx + 1}</div>
+      <div class="post-time-hint">${timeHint}</div>
+    </div>
+    <textarea class="post-textarea" id="postText${idx}" spellcheck="false">${escHtml(text)}</textarea>
+    <div class="post-card-footer">
+      <span class="char-count" id="charCount${idx}"></span>
+      <div style="display:flex;gap:6px;">
+        <button class="copy-btn" id="translateBtn${idx}">RU</button>
+        <button class="copy-btn" id="copyBtn${idx}">копировать</button>
+      </div>
+    </div>
+  `;
+
+  // char count
+  const ta = card.querySelector(`#postText${idx}`);
+  const cc = card.querySelector(`#charCount${idx}`);
+  const updateCount = () => {
+    const len = ta.value.length;
+    cc.textContent = `${len} / 25000`;
+    cc.className = 'char-count' + (len > 25000 ? ' over' : '');
+    posts[idx] = ta.value;
+    savePosts();
+  };
+  ta.addEventListener('input', updateCount);
+
+  // auto-resize
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+  setTimeout(() => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+    updateCount();
+  }, 0);
+
+  // translate btn
+  const translateBtn = card.querySelector(`#translateBtn${idx}`);
+  translateBtn.addEventListener('click', () => translatePost(idx));
+
+  // copy btn
+  const copyBtn = card.querySelector(`#copyBtn${idx}`);
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(ta.value).then(() => {
+      copyBtn.textContent = '✓ скопировано';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'копировать';
+        copyBtn.classList.remove('copied');
+      }, 1500);
+    });
+  });
+
+  return card;
+}
+
+function addEmptyPost() {
+  posts.push('');
+  renderPosts();
+  // focus new textarea
+  const idx = posts.length - 1;
+  setTimeout(() => {
+    const ta = document.getElementById(`postText${idx}`);
+    if (ta) ta.focus();
+  }, 50);
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ──────────────────────────────────────────
+// API CALL
+// ──────────────────────────────────────────
+
+// Generic OpenRouter call (OpenAI-compatible)
+async function callOpenRouter(apiKey, model, messages, maxTokens = 4000) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': location.href,
+      'X-Title': 'morning.exe',
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || 'api error'}`);
+  return data?.choices?.[0]?.message?.content || '';
+}
+
+async function handleGenerate() {
+  const provider = currentProvider();
+  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  if (!apiKey) {
+    document.getElementById('apiMsg').textContent = 'добавь api ключ в настройках ⚙';
+    document.getElementById('settingsPanel').classList.add('open');
+    return;
+  }
+
+  if (generating) return;
+  setGenerating(true);
+  hideError();
+  clearApiMsg();
+
+  const idea = document.getElementById('ideaInput').value.trim();
+
+  try {
+    let researchContext = '';
+
+    // ── STEP 1: research (only if idea provided + OpenRouter available)
+    if (idea && provider === 'openrouter') {
+      setStatus('🔍 ресёрч...');
+      try {
+        researchContext = await callOpenRouter(
+          apiKey,
+          'perplexity/sonar',
+          [{ role: 'user', content:
+            `Research this topic briefly for a crypto/AI builder's Twitter post. Find 2-3 fresh facts, stats, or insights. Topic: "${idea}"\n\nReturn only the key findings as bullet points, no fluff.`
+          }],
+          400
+        );
+      } catch(e) {
+        // research failed — continue without it
+        researchContext = '';
+      }
+    }
+
+    // ── STEP 2: generate posts
+    setStatus('✍️ пишу посты...');
+    const prompt = buildPrompt(idea, researchContext);
+    let rawText = '';
+
+    if (provider === 'anthropic') {
+      const cfg = PROVIDERS.anthropic;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
+      rawText = data?.content?.[0]?.text || '';
+    } else {
+      const cfg = PROVIDERS[provider];
+      rawText = await callOpenRouter(apiKey, cfg.model, [{ role: 'user', content: prompt }]);
+    }
+
+    parsePosts(rawText);
+
+  } catch (err) {
+    showError(`ошибка: ${err.message}`);
+  } finally {
+    setGenerating(false);
+    setStatus('');
+  }
+}
+
+async function translatePost(idx) {
+  const provider = currentProvider();
+  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  if (!apiKey) { showError('добавь api ключ в настройках ⚙'); return; }
+
+  const ta = document.getElementById(`postText${idx}`);
+  const btn = document.getElementById(`translateBtn${idx}`);
+  if (!ta || !btn) return;
+
+  const original = ta.value.trim();
+  if (!original) return;
+
+  // toggle: if already ru, restore original
+  if (btn.dataset.original) {
+    ta.value = btn.dataset.original;
+    posts[idx] = btn.dataset.original;
+    delete btn.dataset.original;
+    btn.textContent = 'RU';
+    btn.classList.remove('copied');
+    ta.dispatchEvent(new Event('input'));
+    return;
+  }
+
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  try {
+    let translated = '';
+    const msg = [{ role: 'user', content:
+      `Translate this Twitter post to Russian. Keep the style: lowercase, punchy, builder voice, same line breaks. Return ONLY the translated text, nothing else.\n\n${original}`
+    }];
+
+    if (provider === 'anthropic') {
+      const cfg = PROVIDERS.anthropic;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 500, messages: msg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
+      translated = data?.content?.[0]?.text || '';
+    } else {
+      const cfg = PROVIDERS[provider];
+      translated = await callOpenRouter(apiKey, cfg.model, msg, 500);
+    }
+
+    btn.dataset.original = original;
+    ta.value = translated.trim();
+    posts[idx] = translated.trim();
+    btn.textContent = 'EN';
+    btn.classList.add('copied');
+    ta.dispatchEvent(new Event('input'));
+  } catch(e) {
+    showError(`ошибка перевода: ${e.message}`);
+    btn.textContent = 'RU';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function buildPrompt(idea, research = '') {
+  const dateStr = new Date().toLocaleDateString('ru-RU', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const ideaLine = idea
+    ? `Maloy's notes: "${idea}"`
+    : `No notes — use general context: OpenClaw, AI tools, crypto, building in public.`;
+  const researchLine = research
+    ? `\nFresh research findings to use:\n${research}`
+    : '';
+
+  return `You are writing Twitter posts for Maloy — a crypto/AI builder working on OpenClaw, a multi-agent system for research and content.
+
+Today: ${dateStr}
+${ideaLine}${researchLine}
+
+Write 2 posts. Voice rules:
+- plain, conversational language — like texting a smart friend
+- no hype, no "this is huge", no "game-changer", no dramatic openers
+- all lowercase
+- no hashtags
+- no periods at end of sentences
+- → only when listing actual steps, not for decoration
+- just say the thing directly — no warm-up sentences
+- share what you actually observed, built, or figured out
+- numbers and specifics over vague claims
+- post 1 = a thought or observation (15-25 lines)
+- post 2 = something you built or learned (15-25 lines)
+
+Return ONLY valid JSON, no markdown, no backticks:
+{"post1":"text with newlines as \\n","post2":"text with newlines as \\n"}`;
+}
+
+function parsePosts(raw) {
+  let cleaned = raw.trim();
+  // strip possible markdown code fences
+  cleaned = cleaned.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/,'').trim();
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    const p1 = (parsed.post1 || '').replace(/\\n/g, '\n');
+    const p2 = (parsed.post2 || '').replace(/\\n/g, '\n');
+    posts = [p1, p2];
+    savePosts();
+    renderPosts();
+  } catch(e) {
+    // fallback: show raw as single post
+    posts = [cleaned];
+    savePosts();
+    renderPosts();
+  }
+}
+
+// ──────────────────────────────────────────
+// UI HELPERS
+// ──────────────────────────────────────────
+function setGenerating(val) {
+  generating = val;
+  const btn = document.getElementById('generateBtn');
+  const regenBtn = document.getElementById('regenBtn');
+  if (val) {
+    btn.classList.add('generating');
+    btn.disabled = true;
+    if (regenBtn) regenBtn.disabled = true;
+  } else {
+    btn.classList.remove('generating');
+    btn.disabled = false;
+    if (regenBtn) regenBtn.disabled = false;
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById('apiMsg').textContent = msg;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+// ──────────────────────────────────────────
+// GO
+// ──────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
