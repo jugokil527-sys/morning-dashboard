@@ -655,6 +655,7 @@
     </div>
     <div class="header-right">
       <div class="date-tag" id="dateTag"></div>
+      <button class="gear-btn" id="archiveToggleBtn" title="архив">▤</button>
       <button class="gear-btn" id="gearBtn" title="настройки">⚙</button>
     </div>
   </header>
@@ -756,6 +757,7 @@
 
   <!-- ARCHIVE -->
   <div class="archive-section" id="archiveSection" style="display:none;">
+    <div style="height:1px;background:var(--border);margin-bottom:28px;"></div>
     <div class="section-label-row" style="margin-bottom:10px;">
       <div class="section-label" style="margin-bottom:0;">архив</div>
       <button class="archive-clear-btn" id="archiveClearBtn">очистить</button>
@@ -839,7 +841,6 @@ function init() {
   renderChecklist();
   renderStats();
   renderPosts();
-  renderArchive();
   updateProviderBadge();
 
   document.getElementById('gearBtn').addEventListener('click', toggleSettings);
@@ -848,6 +849,7 @@ function init() {
   document.getElementById('regenBtn').addEventListener('click', handleGenerate);
   document.getElementById('addPostBtn').addEventListener('click', addEmptyPost);
   document.getElementById('ideasBtn').addEventListener('click', handleFindIdeas);
+  document.getElementById('archiveToggleBtn').addEventListener('click', toggleArchive);
   document.getElementById('archiveClearBtn').addEventListener('click', () => {
     if (confirm('Очистить весь архив?')) {
       localStorage.removeItem(ARCHIVE_KEY);
@@ -1003,14 +1005,26 @@ function saveArchive(archive) {
   localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
 }
 
+function toggleArchive() {
+  const section = document.getElementById('archiveSection');
+  const btn = document.getElementById('archiveToggleBtn');
+  const visible = section.style.display !== 'none';
+  if (!visible) renderArchive();
+  section.style.display = visible ? 'none' : 'block';
+  btn.style.color = visible ? '' : 'var(--accent)';
+  btn.style.borderColor = visible ? '' : 'var(--accent)';
+  if (!visible) setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
 function renderArchive() {
   const archive = loadArchive();
-  const section = document.getElementById('archiveSection');
   const container = document.getElementById('archiveContainer');
-
-  if (archive.length === 0) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
   container.innerHTML = '';
+
+  if (archive.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:11px;">архив пуст — посты появятся здесь на следующий день</div>`;
+    return;
+  }
 
   archive.forEach(entry => {
     const d = new Date(entry.date + 'T12:00:00');
