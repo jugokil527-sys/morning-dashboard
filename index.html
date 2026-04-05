@@ -503,6 +503,38 @@
   .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
   .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
 
+  .translation-block {
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    background: rgba(200,241,53,0.03);
+  }
+  .translation-label {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .translation-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .translation-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .translation-close:hover { color: var(--accent2); }
+
   .posts-actions {
     display: flex;
     gap: 8px;
@@ -1502,18 +1534,12 @@ async function translatePost(idx) {
   const original = ta.value.trim();
   if (!original) return;
 
-  // toggle: restore original if already translated
-  if (translatedOriginals[idx] !== undefined) {
-    ta.value = translatedOriginals[idx];
-    posts[idx] = translatedOriginals[idx];
-    delete translatedOriginals[idx];
-    savePosts();
+  // toggle: hide existing translation block
+  const existingBlock = document.getElementById(`translationBlock${idx}`);
+  if (existingBlock) {
+    existingBlock.remove();
     btn.textContent = 'RU';
     btn.classList.remove('copied');
-    requestAnimationFrame(() => {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
-    });
     return;
   }
 
@@ -1546,16 +1572,27 @@ async function translatePost(idx) {
       translated = await callOpenRouter(apiKey, cfg.model, msg, 500);
     }
 
-    translatedOriginals[idx] = original;
-    ta.value = translated.trim();
-    posts[idx] = translated.trim();
-    savePosts();
+    // insert translation block below the card footer
+    const card = btn.closest('.post-card');
+    const block = document.createElement('div');
+    block.className = 'translation-block';
+    block.id = `translationBlock${idx}`;
+    block.innerHTML = `
+      <div class="translation-label">
+        <span>ru перевод</span>
+        <button class="translation-close" title="закрыть">✕</button>
+      </div>
+      <div class="translation-text">${escHtml(translated.trim())}</div>
+    `;
+    block.querySelector('.translation-close').addEventListener('click', () => {
+      block.remove();
+      btn.textContent = 'RU';
+      btn.classList.remove('copied');
+    });
+    card.appendChild(block);
+
     btn.textContent = 'EN';
     btn.classList.add('copied');
-    requestAnimationFrame(() => {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
-    });
   } catch(e) {
     showError(`ошибка перевода: ${e.message}`);
     btn.textContent = 'RU';
