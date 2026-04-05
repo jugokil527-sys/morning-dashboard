@@ -1760,34 +1760,35 @@ function buildPrompt(idea, research = '') {
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `You are ghostwriting Twitter posts for a friend. ${authorLine}
+  return `Write 2 Twitter posts IN ENGLISH for a crypto/AI builder. ${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts IN ENGLISH. Imagine your friend is telling you something over voice messages — relaxed, unfiltered, just thinking out loud. Not performing. Not trying to sound smart. Just talking.
+Each post: 300-400 CHARACTERS max (not words — characters). Short. Punchy.
 
-Tone:
+The hook is everything. First line must stop the scroll — surprising, specific, or slightly uncomfortable. Not a question. Not "I". Not a generic observation.
+
+Good hook examples:
+"nobody talks about how much time you waste switching between ai tools"
+"tried deleting my to-do app for a week. still got everything done"
+"the best productivity hack is just doing the thing at 6am before your brain turns on"
+
+After the hook: 2-3 short lines that pay it off. concrete detail, what actually happened, honest reaction. no conclusion, no lesson, just land it.
+
+Rules:
 - all lowercase
-- no hashtags, no bullet points, no lists
-- no hype words, no "this changed everything", no grand conclusions
-- it's okay to ramble a bit, to be uncertain, to say "idk" or "kinda" or "honestly"
-- short sentences. sometimes fragments. like how people actually talk
+- no hashtags, no bullet points
+- no "game-changer", no "unlock", no "here's why"
+- don't summarize, don't moralize
 
-Structure (loose, not rigid):
-- open with the thing that happened or what you noticed — specific, not abstract
-- then just... keep going. what you thought about it. what you tried. what was weird or funny or annoying about it. where your head is at now
-- don't wrap it up too neatly. real conversations don't have clean endings
+post 1 = from today's notes/idea
+post 2 = different small thing, unrelated is fine
 
-Length: 300-450 words per post. long enough to feel like a real story, not a caption.
-
-post 1 = based on today's notes/idea
-post 2 = a different small thing — a tool, a habit, something noticed, something tried
-
-Separate the two posts with exactly this delimiter on its own line:
+Separate with exactly this on its own line:
 ===POST2===
 
-Write post 1 first, then the delimiter, then post 2. No other markers, no JSON, no backticks.`;
+Post 1 first, then delimiter, then post 2. No other markers, no JSON, no backticks.`;
 }
 
 function parsePosts(raw) {
