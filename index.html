@@ -1527,6 +1527,7 @@ async function handleGenerate() {
   if (generating) return;
 
   const idea = document.getElementById('ideaInput').value.trim();
+  console.log('[gen] idea:', JSON.stringify(idea));
   if (!idea) {
     const ta = document.getElementById('ideaInput');
     ta.placeholder = 'напиши что-нибудь сюда — что заметил, что строишь, что попробовал...';
@@ -1589,6 +1590,7 @@ async function handleGenerate() {
     parsePosts(rawText);
 
   } catch (err) {
+    console.error('[gen] error:', err);
     showError(`ошибка: ${err.message}`);
   } finally {
     setGenerating(false);
