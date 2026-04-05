@@ -313,6 +313,8 @@
 
   .generate-btn:hover { opacity: 0.85; }
   .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .input-shake { animation: shake 0.5s ease; border-color: #ff6b6b !important; }
 
   .spinner {
     display: none;
@@ -1522,11 +1524,20 @@ async function handleGenerate() {
   }
 
   if (generating) return;
+
+  const idea = document.getElementById('ideaInput').value.trim();
+  if (!idea) {
+    const ta = document.getElementById('ideaInput');
+    ta.placeholder = 'напиши что-нибудь сюда — что заметил, что строишь, что попробовал...';
+    ta.focus();
+    ta.classList.add('input-shake');
+    setTimeout(() => ta.classList.remove('input-shake'), 600);
+    return;
+  }
+
   setGenerating(true);
   hideError();
   clearApiMsg();
-
-  const idea = document.getElementById('ideaInput').value.trim();
 
   try {
     let researchContext = '';
@@ -1774,24 +1785,37 @@ Voice:
 post 1 = something you noticed, a take on what's happening, a situation you observed
 post 2 = something you built, tested, or figured out — a real update from your work
 
-Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n between paragraphs:
-{"post1":"...","post2":"..."}`;
+Separate the two posts with exactly this delimiter on its own line:
+===POST2===
+
+Write post 1 first, then the delimiter, then post 2. No other markers, no JSON, no backticks.`;
 }
 
 function parsePosts(raw) {
   let cleaned = raw.trim();
-  // strip possible markdown code fences
-  cleaned = cleaned.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/,'').trim();
+  // strip markdown code fences
+  cleaned = cleaned.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim();
 
+  // try delimiter split
+  const delimIdx = cleaned.indexOf('===POST2===');
+  if (delimIdx !== -1) {
+    const p1 = cleaned.slice(0, delimIdx).trim();
+    const p2 = cleaned.slice(delimIdx + 11).trim();
+    posts = [p1, p2].filter(p => p);
+    savePosts();
+    renderPosts();
+    return;
+  }
+
+  // fallback: try JSON parse (legacy)
   try {
     const parsed = JSON.parse(cleaned);
     const p1 = (parsed.post1 || '').replace(/\\n/g, '\n');
     const p2 = (parsed.post2 || '').replace(/\\n/g, '\n');
-    posts = [p1, p2];
+    posts = [p1, p2].filter(p => p);
     savePosts();
     renderPosts();
   } catch(e) {
-    // fallback: show raw as single post
     posts = [cleaned];
     savePosts();
     renderPosts();
