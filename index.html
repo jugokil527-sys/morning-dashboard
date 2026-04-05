@@ -1582,8 +1582,9 @@ async function translatePost(idx) {
         <span>ru перевод</span>
         <button class="translation-close" title="закрыть">✕</button>
       </div>
-      <div class="translation-text">${escHtml(translated.trim())}</div>
+      <div class="translation-text"></div>
     `;
+    block.querySelector('.translation-text').textContent = translated.trim();
     block.querySelector('.translation-close').addEventListener('click', () => {
       block.remove();
       btn.textContent = 'RU';
