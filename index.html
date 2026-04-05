@@ -1044,17 +1044,17 @@ async function handleFindIdeas() {
       apiKey,
       'perplexity/sonar',
       [{ role: 'user', content:
-        `Today is ${today}. You are helping a crypto/AI builder find ideas for Twitter posts.
+        `Today is ${today}. Search the web for what actually happened in the last 24-48 hours in AI and crypto.
 
-Generate 3 simple, practical post ideas based on what's actually happening right now in AI and crypto tools. Think: "found this tool", "comparing X vs Y models", "tested this approach", "noticed this pattern", etc.
+Find 3 specific things: new model releases, new tools launched, interesting benchmark results, notable experiments people shared, price moves with context, protocol updates. Use real names — specific model names, tool names, numbers.
 
-Each idea should feel like something a builder would naturally share — not news commentary, just practical observations.
+Then turn each into a Twitter post idea for a crypto/AI builder who builds agents and tests tools hands-on.
 
-Return in Russian. Return ONLY valid JSON, no markdown:
+Return in Russian. Return ONLY valid JSON array, no markdown, no explanation:
 [{"title":"...","why":"..."},{"title":"...","why":"..."},{"title":"...","why":"..."}]
 
-title = сама идея для поста (одно предложение, от первого лица, например "нашёл инструмент который...")
-why = почему это актуально прямо сейчас (одно предложение)`
+title = идея поста от первого лица с конкретным названием (например: "потестил новый Claude 3.7 на задачах ресёрча — вот что нашёл")
+why = одна конкретная причина почему это важно прямо сейчас, с фактом или цифрой`
       }],
       600
     );
