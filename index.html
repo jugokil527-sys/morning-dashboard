@@ -1808,35 +1808,42 @@ function buildPrompt(idea, research = '') {
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `You are a Twitter ghostwriter. ${authorLine}
+  return `${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts IN ENGLISH.
+Write 2 Twitter posts in English. Match this exact style — read these examples carefully:
 
-The style: like you're telling a friend what happened or what you noticed. no lists, no bullet points, no numbered tips. just natural flowing text broken into short paragraphs.
+---
+been using perplexity for research instead of google for a month now. it's not perfect but i stopped opening 7 tabs at once. that alone is worth it
 
-Structure for each post:
-- opening line: one sentence that makes someone want to keep reading. specific, not vague
-- blank line
-- 3-5 short paragraphs that tell the story or explain the observation. each paragraph 1-3 lines. blank line between them
-- closing line: one sentence that lands the point or adds a twist
+the weird thing is i trust it less than google but use it more. something about getting one answer instead of ten links just moves things faster
+---
 
-Voice:
-- all lowercase
-- conversational, no hype
-- no hashtags, no bullet points, no numbered lists
-- no periods at end of sentences
-- write like you're texting someone smart — short sentences, real details, honest
+---
+tried timeboxing my mornings this week. 90 min of real work before i open slack or twitter
 
-post 1 = something you noticed, a take on what's happening, a situation you observed
-post 2 = something you built, tested, or figured out — a real update from your work
+first two days were great. third day i checked twitter at 8am out of habit and the whole thing fell apart. still trying
+---
 
-Separate the two posts with exactly this delimiter on its own line:
+---
+built a small script to summarize my weekly notes into a single doc. took 2 hours. now i actually read my old notes which i never did before
+
+not sure if the summary is good or if i just like having fewer things open
+---
+
+Notice: short sentences. no conclusions or lessons. specific small details. honest about what didn't work. lowercase. no hashtags. reads like a real person thinking out loud, not explaining something.
+
+NEVER use: "it's worth noting", "in today's world", "game-changer", "leverage", "unlock", "dive into", "crucial", "it's important to"
+
+post 1 = from today's idea/notes
+post 2 = different small thing, can be unrelated
+
+put exactly this between them on its own line:
 ===POST2===
 
-Write post 1 first, then the delimiter, then post 2. No other markers, no JSON, no backticks.`;
+no other markers, no json, no backticks.`;
 }
 
 function parsePosts(raw) {
