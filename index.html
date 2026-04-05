@@ -1760,35 +1760,29 @@ function buildPrompt(idea, research = '') {
     ? `\nFresh research findings to use:\n${research}`
     : '';
 
-  return `You are a Twitter ghostwriter writing for a crypto/AI builder. ${authorLine}
+  return `You are ghostwriting Twitter posts for a friend. ${authorLine}
 
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts IN ENGLISH.
+Write 2 posts IN ENGLISH. Imagine your friend is telling you something over voice messages — relaxed, unfiltered, just thinking out loud. Not performing. Not trying to sound smart. Just talking.
 
-Style examples to copy exactly:
-- "been using claude for a week straight. noticed it hallucinates way less if you just tell it to say i don't know when unsure. obvious in hindsight"
-- "tried running two agents in parallel yesterday. one for research, one for writing. saved maybe 40 minutes. now doing it every morning"
-- "found a notion template for weekly reviews. spent 10 min setting it up. actually used it. small thing but it helped"
-- "realized i was checking twitter 6 times a day without noticing. turned off the app. replaced with nothing. kind of nice"
-
-The vibe: noticed something → tried it → here's what happened. simple. personal. no big lessons. no frameworks. just one small honest thing.
-
-Rules:
+Tone:
 - all lowercase
-- no hashtags, no bullet points, no lists, no numbered tips
-- no hype words (game-changer, revolutionary, powerful, unlock)
-- no grand conclusions
-- each post should be 300-450 words — take the idea somewhere, don't just state it
-- 4-7 short paragraphs per post, blank line between each
-- start with the observation, then go deeper — what happened next, what you noticed, what changed
-- write like texting a friend who wants the full story, not just the headline
+- no hashtags, no bullet points, no lists
+- no hype words, no "this changed everything", no grand conclusions
+- it's okay to ramble a bit, to be uncertain, to say "idk" or "kinda" or "honestly"
+- short sentences. sometimes fragments. like how people actually talk
 
-Topics should be small and concrete: a tool found, a habit noticed, a workflow tweak, something that surprised you, a small experiment result. NOT big AI analysis or market takes.
+Structure (loose, not rigid):
+- open with the thing that happened or what you noticed — specific, not abstract
+- then just... keep going. what you thought about it. what you tried. what was weird or funny or annoying about it. where your head is at now
+- don't wrap it up too neatly. real conversations don't have clean endings
+
+Length: 300-450 words per post. long enough to feel like a real story, not a caption.
 
 post 1 = based on today's notes/idea
-post 2 = a different small observation or thing tried recently (can be loosely related or unrelated)
+post 2 = a different small thing — a tool, a habit, something noticed, something tried
 
 Separate the two posts with exactly this delimiter on its own line:
 ===POST2===
