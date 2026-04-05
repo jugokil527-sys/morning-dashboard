@@ -1630,11 +1630,15 @@ Write 2 posts IN ENGLISH. Voice rules:
 - just say the thing directly — no warm-up sentences
 - share what you actually observed, built, or figured out
 - numbers and specifics over vague claims
-- post 1 = a thought or observation (15-25 lines)
-- post 2 = something you built or learned (15-25 lines)
 
-Return ONLY valid JSON, no markdown, no backticks:
-{"post1":"text with newlines as \\n","post2":"text with newlines as \\n"}`;
+Formatting rules:
+- use paragraph breaks (blank line between paragraphs) to separate distinct thoughts
+- each paragraph = 1-3 lines max
+- 4-6 paragraphs per post total
+- do NOT write one big wall of text
+
+Return ONLY valid JSON, no markdown, no backticks. Use \\n\\n for paragraph breaks, \\n for line breaks within a paragraph:
+{"post1":"paragraph\\n\\nparagraph\\n\\nparagraph","post2":"paragraph\\n\\nparagraph\\n\\nparagraph"}`;
 }
 
 function parsePosts(raw) {
