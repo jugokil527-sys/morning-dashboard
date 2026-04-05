@@ -537,6 +537,93 @@
 
   .add-post-btn:hover { border-color: var(--accent2); color: var(--accent2); }
 
+  /* ---- ARCHIVE ---- */
+  .archive-section { margin-bottom: 28px; }
+
+  .archive-clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .archive-clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .archive-day {
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .archive-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+  }
+  .archive-day-header:hover { background: rgba(255,255,255,0.02); }
+
+  .archive-day-date {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .archive-day-meta {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .archive-day-toggle {
+    font-size: 10px;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .archive-day.open .archive-day-toggle { transform: rotate(180deg); }
+
+  .archive-day-posts {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .archive-day.open .archive-day-posts { display: block; }
+
+  .archive-post {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .archive-post:last-child { border-bottom: none; }
+
+  .archive-post-header {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .archive-copy-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+  }
+  .archive-copy-btn:hover { color: var(--accent); }
+
   /* ---- ERROR ---- */
   .error-box {
     background: rgba(241, 53, 103, 0.08);
@@ -667,6 +754,15 @@
     </div>
   </div>
 
+  <!-- ARCHIVE -->
+  <div class="archive-section" id="archiveSection" style="display:none;">
+    <div class="section-label-row" style="margin-bottom:10px;">
+      <div class="section-label" style="margin-bottom:0;">архив</div>
+      <button class="archive-clear-btn" id="archiveClearBtn">очистить</button>
+    </div>
+    <div id="archiveContainer"></div>
+  </div>
+
 </div>
 
 <script>
@@ -726,6 +822,7 @@ const POST_TIMES = ['9:00–11:00 UTC', '13:00–15:00 UTC'];
 
 let checkState = {};
 const POSTS_KEY = `posts_${TODAY}`;
+const ARCHIVE_KEY = 'posts_archive';
 let posts = [];
 let generating = false;
 
@@ -736,11 +833,13 @@ function init() {
   if (!localStorage.getItem(PROVIDER_KEY)) localStorage.setItem(PROVIDER_KEY, 'openrouter');
 
   setDate();
+  archiveOldPosts();
   loadPosts();
   loadCheckState();
   renderChecklist();
   renderStats();
   renderPosts();
+  renderArchive();
   updateProviderBadge();
 
   document.getElementById('gearBtn').addEventListener('click', toggleSettings);
@@ -749,6 +848,12 @@ function init() {
   document.getElementById('regenBtn').addEventListener('click', handleGenerate);
   document.getElementById('addPostBtn').addEventListener('click', addEmptyPost);
   document.getElementById('ideasBtn').addEventListener('click', handleFindIdeas);
+  document.getElementById('archiveClearBtn').addEventListener('click', () => {
+    if (confirm('Очистить весь архив?')) {
+      localStorage.removeItem(ARCHIVE_KEY);
+      renderArchive();
+    }
+  });
   document.getElementById('apiKeyInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') saveApiKey();
   });
@@ -846,7 +951,7 @@ function clearApiMsg() {
 }
 
 // ──────────────────────────────────────────
-// POSTS PERSISTENCE
+// POSTS PERSISTENCE + ARCHIVE
 // ──────────────────────────────────────────
 function loadPosts() {
   try {
@@ -857,6 +962,99 @@ function loadPosts() {
 
 function savePosts() {
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+}
+
+// Scan localStorage for old posts_YYYY-MM-DD keys and move them to archive
+function archiveOldPosts() {
+  const archive = loadArchive();
+  const existingDates = new Set(archive.map(e => e.date));
+  const toDelete = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('posts_') || key === POSTS_KEY) continue;
+    const date = key.replace('posts_', '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    if (date >= TODAY) continue; // skip future (shouldn't happen)
+    try {
+      const dayPosts = JSON.parse(localStorage.getItem(key) || '[]');
+      const nonEmpty = dayPosts.filter(p => p && p.trim());
+      if (nonEmpty.length > 0 && !existingDates.has(date)) {
+        archive.push({ date, posts: nonEmpty });
+        existingDates.add(date);
+      }
+      toDelete.push(key);
+    } catch(e) { toDelete.push(key); }
+  }
+
+  if (toDelete.length > 0) {
+    toDelete.forEach(k => localStorage.removeItem(k));
+    archive.sort((a, b) => b.date.localeCompare(a.date));
+    saveArchive(archive);
+  }
+}
+
+function loadArchive() {
+  try { return JSON.parse(localStorage.getItem(ARCHIVE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveArchive(archive) {
+  localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+}
+
+function renderArchive() {
+  const archive = loadArchive();
+  const section = document.getElementById('archiveSection');
+  const container = document.getElementById('archiveContainer');
+
+  if (archive.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  container.innerHTML = '';
+
+  archive.forEach(entry => {
+    const d = new Date(entry.date + 'T12:00:00');
+    const label = d.toLocaleDateString('ru-RU', { weekday:'short', day:'numeric', month:'long' });
+
+    const day = document.createElement('div');
+    day.className = 'archive-day';
+    day.innerHTML = `
+      <div class="archive-day-header">
+        <div class="archive-day-date">${label}</div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div class="archive-day-meta">${entry.posts.length} ${entry.posts.length === 1 ? 'пост' : 'поста'}</div>
+          <div class="archive-day-toggle">▼</div>
+        </div>
+      </div>
+      <div class="archive-day-posts"></div>
+    `;
+
+    const postsEl = day.querySelector('.archive-day-posts');
+    entry.posts.forEach((text, i) => {
+      const p = document.createElement('div');
+      p.className = 'archive-post';
+      p.innerHTML = `
+        <div class="archive-post-header">
+          <span>пост ${i + 1}</span>
+          <button class="archive-copy-btn">копировать</button>
+        </div>
+        <div>${escHtml(text)}</div>
+      `;
+      p.querySelector('.archive-copy-btn').addEventListener('click', function() {
+        navigator.clipboard.writeText(text).then(() => {
+          this.textContent = '✓';
+          setTimeout(() => this.textContent = 'копировать', 1500);
+        });
+      });
+      postsEl.appendChild(p);
+    });
+
+    day.querySelector('.archive-day-header').addEventListener('click', () => {
+      day.classList.toggle('open');
+    });
+
+    container.appendChild(day);
+  });
 }
 
 // CHECKLIST
