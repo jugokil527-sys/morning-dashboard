@@ -838,6 +838,9 @@ const POSTS_KEY = `posts_${TODAY}`;
 const ARCHIVE_KEY = 'posts_archive';
 const PROFILE_KEY = 'user_profile';
 
+// stores original EN text while translated version is shown
+const translatedOriginals = {};
+
 const IDEA_ANGLES = [
   'нашёл инструмент который',
   'сравниваю два подхода:',
@@ -1499,14 +1502,16 @@ async function translatePost(idx) {
   const original = ta.value.trim();
   if (!original) return;
 
-  // toggle: if already ru, restore original
-  if (btn.dataset.original) {
-    ta.value = btn.dataset.original;
-    posts[idx] = btn.dataset.original;
-    delete btn.dataset.original;
+  // toggle: restore original if already translated
+  if (translatedOriginals[idx] !== undefined) {
+    ta.value = translatedOriginals[idx];
+    posts[idx] = translatedOriginals[idx];
+    delete translatedOriginals[idx];
+    savePosts();
     btn.textContent = 'RU';
     btn.classList.remove('copied');
-    ta.dispatchEvent(new Event('input'));
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
     return;
   }
 
@@ -1514,11 +1519,11 @@ async function translatePost(idx) {
   btn.disabled = true;
 
   try {
-    let translated = '';
     const msg = [{ role: 'user', content:
       `Translate this Twitter post to Russian. Keep the style: lowercase, punchy, builder voice, same line breaks. Return ONLY the translated text, nothing else.\n\n${original}`
     }];
 
+    let translated = '';
     if (provider === 'anthropic') {
       const cfg = PROVIDERS.anthropic;
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1539,12 +1544,14 @@ async function translatePost(idx) {
       translated = await callOpenRouter(apiKey, cfg.model, msg, 500);
     }
 
-    btn.dataset.original = original;
+    translatedOriginals[idx] = original;
     ta.value = translated.trim();
     posts[idx] = translated.trim();
+    savePosts();
     btn.textContent = 'EN';
     btn.classList.add('copied');
-    ta.dispatchEvent(new Event('input'));
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   } catch(e) {
     showError(`ошибка перевода: ${e.message}`);
     btn.textContent = 'RU';
@@ -1571,7 +1578,7 @@ function buildPrompt(idea, research = '') {
 Today: ${dateStr}
 ${ideaLine}${researchLine}
 
-Write 2 posts. Voice rules:
+Write 2 posts IN ENGLISH. Voice rules:
 - plain, conversational language — like texting a smart friend
 - no hype, no "this is huge", no "game-changer", no dramatic openers
 - all lowercase
