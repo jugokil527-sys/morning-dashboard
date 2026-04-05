@@ -1510,8 +1510,10 @@ async function translatePost(idx) {
     savePosts();
     btn.textContent = 'RU';
     btn.classList.remove('copied');
-    ta.style.height = 'auto';
-    ta.style.height = ta.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
     return;
   }
 
@@ -1550,8 +1552,10 @@ async function translatePost(idx) {
     savePosts();
     btn.textContent = 'EN';
     btn.classList.add('copied');
-    ta.style.height = 'auto';
-    ta.style.height = ta.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
   } catch(e) {
     showError(`ошибка перевода: ${e.message}`);
     btn.textContent = 'RU';
