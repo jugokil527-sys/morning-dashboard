@@ -1447,7 +1447,11 @@ async function callOpenRouter(apiKey, model, messages, maxTokens = 4000) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || 'api error'}`);
-  return data?.choices?.[0]?.message?.content || '';
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) return content.map(c => c.text || c.content || '').join('');
+  // fallback: some models put text in different places
+  return data?.choices?.[0]?.text || data?.output?.[0]?.content?.[0]?.text || '';
 }
 
 async function handleGenerate() {
@@ -1562,14 +1566,20 @@ async function translatePost(idx) {
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({ model: cfg.model, max_tokens: 500, messages: msg }),
+        body: JSON.stringify({ model: cfg.model, max_tokens: 1500, messages: msg }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
       translated = data?.content?.[0]?.text || '';
     } else {
       const cfg = PROVIDERS[provider];
-      translated = await callOpenRouter(apiKey, cfg.model, msg, 500);
+      translated = await callOpenRouter(apiKey, cfg.model, msg, 1500);
+    }
+
+    if (!translated.trim()) {
+      showError('перевод вернул пустой ответ — попробуй ещё раз');
+      btn.textContent = 'RU';
+      return;
     }
 
     // insert translation block below the card footer
