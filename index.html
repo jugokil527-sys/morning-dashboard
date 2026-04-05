@@ -1584,7 +1584,9 @@ async function handleGenerate() {
       rawText = data?.content?.[0]?.text || '';
     } else {
       const cfg = PROVIDERS[provider];
+      console.log('[gen] calling openrouter, model:', cfg.model);
       rawText = await callOpenRouter(apiKey, cfg.model, [{ role: 'user', content: prompt }]);
+      console.log('[gen] got rawText length:', rawText?.length, '| preview:', rawText?.slice(0,100));
     }
 
     parsePosts(rawText);
