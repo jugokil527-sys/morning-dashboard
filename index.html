@@ -1527,9 +1527,9 @@ async function handleGenerate() {
 }
 
 async function translatePost(idx) {
-  const provider = currentProvider();
-  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
-  if (!apiKey) { showError('добавь api ключ в настройках ⚙'); return; }
+  if (!(localStorage.getItem(keyStorageKey(currentProvider())) || '').trim()) {
+    showError('добавь api ключ в настройках ⚙'); return;
+  }
 
   const ta = document.getElementById(`postText${idx}`);
   const btn = document.getElementById(`translateBtn${idx}`);
@@ -1551,14 +1551,31 @@ async function translatePost(idx) {
   btn.disabled = true;
 
   try {
-    const res = await fetch('https://ru.libretranslate.com/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: original, source: 'en', target: 'ru' }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-    let translated = data.translatedText || '';
+    const provider = currentProvider();
+    const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+    const cfg = PROVIDERS[provider];
+    const msg = [{ role: 'user', content:
+      `Translate this Twitter post to Russian. Keep the style: lowercase, same paragraph breaks, builder voice. Return ONLY the translated text, nothing else.\n\n${original}`
+    }];
+
+    let translated = '';
+    if (provider === 'anthropic') {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 1500, messages: msg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`${res.status}: ${data?.error?.message || ''}`);
+      translated = data?.content?.[0]?.text || '';
+    } else {
+      translated = await callOpenRouter(apiKey, cfg.model, msg, 1500);
+    }
 
     if (!translated.trim()) {
       showError('перевод вернул пустой ответ — попробуй ещё раз');
