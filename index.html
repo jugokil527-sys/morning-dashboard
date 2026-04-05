@@ -1592,15 +1592,19 @@ async function handleGenerate() {
     // ── STEP 3: humanize
     setStatus('🫀 humanize...');
     try {
-      const humanizePrompt = `Rewrite these Twitter posts to sound less like AI. Keep the same meaning and facts. Make it feel like a real person typed it — imperfect, casual, direct.
+      const humanizePrompt = `Rewrite these Twitter posts. Keep the same meaning and facts. Same ===POST2=== delimiter between posts.
 
-Remove phrases like: "it's worth noting", "in today's world", "dive into", "leverage", "unlock", "crucial", "it's important to", "game-changer"
+Rules:
+- all lowercase, no hashtags, no periods at line ends
+- remove filler phrases: "the real kicker", "kinda crazy", "pretty sure", "game changer", "it's worth noting", "dive into", "leverage", "unlock", "crucial"
+- no fake casualness — if there's an opinion, state it clearly, no hedging
+- uneven rhythm — some lines 2-3 words, some longer
+- keep → only where it actually adds something
+- delete any line that doesn't add new information
+- last line should be sharp, not a summary
+- don't explain what you changed, just output the rewritten posts
 
-Keep: all lowercase, no hashtags, same ===POST2=== delimiter between posts.
-
-${rawText}
-
-Return only the rewritten posts, nothing else.`;
+${rawText}`;
 
       let humanized = '';
       if (provider === 'anthropic') {
