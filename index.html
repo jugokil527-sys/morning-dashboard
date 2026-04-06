@@ -451,6 +451,22 @@
     border-color: #4caf7d;
   }
 
+  .visual-preset {
+    font-size: 10px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .visual-preset:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
   #visualBoard {
     columns: 3;
     column-gap: 8px;
@@ -899,7 +915,8 @@
         </button>
       </div>
     </div>
-    <div id="visualBoard" style="display:none;"></div>
+    <div id="visualPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+    <div id="visualBoard" style="display:none;margin-top:12px;"></div>
   </div>
 
   <!-- POSTS -->
@@ -1048,6 +1065,30 @@ function init() {
   document.getElementById('unsplashKeyInput').value = localStorage.getItem('unsplash_key') || '';
   document.getElementById('visualBtn').addEventListener('click', handleVisualSearch);
   document.getElementById('visualQuery').addEventListener('keydown', e => { if (e.key === 'Enter') handleVisualSearch(); });
+
+  const VISUAL_PRESETS = [
+    'dark neon typography poster',
+    'film grain night city blur',
+    'glitch digital error screen',
+    'surreal cinematic lone figure',
+    'bold experimental typography grain',
+    'analog film street night',
+    'human robot surreal everyday',
+    'dark moody neon room',
+    'editorial graphic design abstract',
+    'motion blur protest crowd night',
+  ];
+  const presetsEl = document.getElementById('visualPresets');
+  VISUAL_PRESETS.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'visual-preset';
+    btn.textContent = q;
+    btn.addEventListener('click', () => {
+      document.getElementById('visualQuery').value = q;
+      handleVisualSearch();
+    });
+    presetsEl.appendChild(btn);
+  });
   document.getElementById('expandProfileBtn').addEventListener('click', expandProfile);
   document.getElementById('archiveClearBtn').addEventListener('click', () => {
     if (confirm('Очистить весь архив?')) {
