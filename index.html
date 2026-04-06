@@ -496,6 +496,21 @@
     background: rgba(255,255,255,0.02);
   }
 
+  .visual-close-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+  .visual-close-btn:hover { color: #ff6b6b; border-color: #ff6b6b; }
+
   .visual-preset {
     font-size: 10px;
     padding: 4px 10px;
@@ -2322,7 +2337,16 @@ async function handleVisualSearch() {
       wrap.addEventListener('click', () => window.open(photo.links.html, '_blank'));
       board.appendChild(wrap);
     });
-    board.style.display = board.children.length ? 'block' : 'none';
+    if (board.children.length) {
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '✕ закрыть';
+      closeBtn.className = 'visual-close-btn';
+      closeBtn.addEventListener('click', () => { board.innerHTML = ''; board.style.display = 'none'; });
+      board.insertBefore(closeBtn, board.firstChild);
+      board.style.display = 'block';
+    } else {
+      board.style.display = 'none';
+    }
   } catch(e) {
     alert('ошибка: ' + e.message);
   } finally {
