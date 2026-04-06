@@ -451,6 +451,24 @@
     border-color: #4caf7d;
   }
 
+  .visual-post-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .visual-post-btn:hover {
+    color: var(--accent);
+    background: rgba(255,255,255,0.02);
+  }
+
   .visual-preset {
     font-size: 10px;
     padding: 4px 10px;
@@ -1466,6 +1484,7 @@ function buildPostCard(text, idx) {
         <button class="edit-apply-btn" id="editApplyBtn${idx}">→</button>
       </div>
     </div>
+    <button class="visual-post-btn" id="visualPostBtn${idx}">◈ визуал под пост</button>
   `;
 
   // char count
@@ -1524,6 +1543,14 @@ function buildPostCard(text, idx) {
   // translate btn
   const translateBtn = card.querySelector(`#translateBtn${idx}`);
   translateBtn.addEventListener('click', () => translatePost(idx));
+
+  // visual post btn
+  card.querySelector(`#visualPostBtn${idx}`).addEventListener('click', () => {
+    const query = pickVisualQuery(ta.value);
+    document.getElementById('visualQuery').value = query;
+    handleVisualSearch();
+    document.getElementById('visualBoard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
   // copy btn
   const copyBtn = card.querySelector(`#copyBtn${idx}`);
@@ -2060,6 +2087,30 @@ function hideError() {
 // ──────────────────────────────────────────
 // VISUAL BOARD
 // ──────────────────────────────────────────
+function pickVisualQuery(postText) {
+  const text = postText.toLowerCase();
+
+  const presets = [
+    { q: 'glitch digital error screen',          keys: ['error', 'bug', 'fail', 'crash', 'broken', 'debug', 'code', 'agent', 'ai', 'model'] },
+    { q: 'dark neon typography poster',          keys: ['build', 'ship', 'launch', 'product', 'tool', 'system', 'workflow'] },
+    { q: 'film grain night city blur',           keys: ['night', 'city', 'street', 'late', 'morning', 'dark', 'sleep'] },
+    { q: 'surreal cinematic lone figure',        keys: ['alone', 'lost', 'think', 'realize', 'notice', 'found', 'discover'] },
+    { q: 'bold experimental typography grain',   keys: ['write', 'post', 'content', 'tweet', 'words', 'text', 'idea'] },
+    { q: 'human robot surreal everyday',         keys: ['robot', 'machine', 'automat', 'replac', 'human', 'people', 'agent'] },
+    { q: 'analog film street documentary',       keys: ['test', 'tried', 'experiment', 'week', 'day', 'habit', 'routine'] },
+    { q: 'dark moody neon room interior',        keys: ['work', 'desk', 'focus', 'studio', 'home', 'setup', 'morning'] },
+    { q: 'motion blur protest energy crowd',     keys: ['crypto', 'market', 'price', 'trade', 'money', 'fast', 'move'] },
+    { q: 'editorial abstract graphic design',    keys: ['research', 'data', 'analysis', 'report', 'find', 'result'] },
+  ];
+
+  let best = presets[0];
+  let bestScore = 0;
+  for (const p of presets) {
+    const score = p.keys.filter(k => text.includes(k)).length;
+    if (score > bestScore) { bestScore = score; best = p; }
+  }
+  return best.q;
+}
 async function handleVisualSearch() {
   const key = localStorage.getItem('unsplash_key') || '';
   if (!key) {
