@@ -451,6 +451,33 @@
     border-color: #4caf7d;
   }
 
+  .analytics-upload-area {
+    border: 1px dashed var(--border);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    transition: border-color 0.2s;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .analytics-upload-area:hover { border-color: var(--accent); }
+  .analytics-upload-area.has-img { padding: 12px; cursor: default; }
+
+  #analyticsResult {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
   .visual-post-btn {
     width: 100%;
     padding: 8px;
@@ -948,6 +975,30 @@
     </div>
   </div>
 
+  <!-- ANALYTICS -->
+  <div class="posts-section" style="margin-top:28px;">
+    <div class="section-label">аналитика дня</div>
+    <div class="analytics-upload-area" id="analyticsUploadArea">
+      <input type="file" id="analyticsImg" accept="image/*" style="display:none;">
+      <div id="analyticsImgPreview" style="display:none;position:relative;">
+        <img id="analyticsImgEl" style="max-width:100%;max-height:220px;display:block;margin:0 auto;">
+        <button id="analyticsImgRemove" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);border:none;color:#fff;cursor:pointer;padding:2px 8px;font-size:12px;">✕</button>
+      </div>
+      <div id="analyticsUploadPlaceholder">
+        <span style="font-size:22px;">↑</span><br>
+        <span>кинь скрин аналитики</span>
+      </div>
+    </div>
+    <textarea class="idea-textarea" id="analyticsText" placeholder="можно добавить цифры: показы, лайки, репосты, подписчики..." style="min-height:60px;margin-top:8px;"></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+      <button class="ideas-btn" id="analyticsBtn">
+        <span>→ оценить день</span>
+        <span class="spinner" id="analyticsSpinner"></span>
+      </button>
+    </div>
+    <div id="analyticsResult" style="display:none;"></div>
+  </div>
+
   <!-- ARCHIVE -->
   <div class="archive-section" id="archiveSection" style="display:none;">
     <div style="height:1px;background:var(--border);margin-bottom:28px;"></div>
@@ -1081,6 +1132,17 @@ function init() {
     if (val) localStorage.setItem('unsplash_key', val);
   });
   document.getElementById('unsplashKeyInput').value = localStorage.getItem('unsplash_key') || '';
+  // analytics
+  const uploadArea = document.getElementById('analyticsUploadArea');
+  const imgInput = document.getElementById('analyticsImg');
+  uploadArea.addEventListener('click', e => { if (!e.target.closest('#analyticsImgPreview')) imgInput.click(); });
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = 'var(--accent)'; });
+  uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+  uploadArea.addEventListener('drop', e => { e.preventDefault(); uploadArea.style.borderColor = ''; if (e.dataTransfer.files[0]) loadAnalyticsImg(e.dataTransfer.files[0]); });
+  imgInput.addEventListener('change', () => { if (imgInput.files[0]) loadAnalyticsImg(imgInput.files[0]); });
+  document.getElementById('analyticsImgRemove').addEventListener('click', e => { e.stopPropagation(); clearAnalyticsImg(); });
+  document.getElementById('analyticsBtn').addEventListener('click', handleAnalytics);
+
   document.getElementById('visualBtn').addEventListener('click', handleVisualSearch);
   document.getElementById('visualQuery').addEventListener('keydown', e => { if (e.key === 'Enter') handleVisualSearch(); });
 
@@ -2082,6 +2144,109 @@ function showError(msg) {
 
 function hideError() {
   document.getElementById('errorBox').style.display = 'none';
+}
+
+// ──────────────────────────────────────────
+// ANALYTICS
+// ──────────────────────────────────────────
+let analyticsImgBase64 = null;
+
+function loadAnalyticsImg(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    analyticsImgBase64 = e.target.result; // data:image/...;base64,...
+    document.getElementById('analyticsImgEl').src = analyticsImgBase64;
+    document.getElementById('analyticsImgPreview').style.display = 'block';
+    document.getElementById('analyticsUploadPlaceholder').style.display = 'none';
+    document.getElementById('analyticsUploadArea').classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAnalyticsImg() {
+  analyticsImgBase64 = null;
+  document.getElementById('analyticsImgEl').src = '';
+  document.getElementById('analyticsImgPreview').style.display = 'none';
+  document.getElementById('analyticsUploadPlaceholder').style.display = 'flex';
+  document.getElementById('analyticsUploadArea').classList.remove('has-img');
+  document.getElementById('analyticsImg').value = '';
+}
+
+async function handleAnalytics() {
+  const provider = currentProvider();
+  const apiKey = (localStorage.getItem(keyStorageKey(provider)) || '').trim();
+  if (!apiKey) {
+    document.getElementById('settingsPanel').classList.add('open');
+    return;
+  }
+
+  const userText = document.getElementById('analyticsText').value.trim();
+  if (!analyticsImgBase64 && !userText) {
+    document.getElementById('analyticsText').focus();
+    return;
+  }
+
+  const btn = document.getElementById('analyticsBtn');
+  const spinner = document.getElementById('analyticsSpinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  const systemPrompt = `Ты честный аналитик Twitter/X аккаунта для крипто/AI билдера. Смотришь на результаты дня и даёшь прямую оценку — без лести, без воды. Если плохо — говоришь плохо и почему. Если хорошо — говоришь хорошо и что именно сработало. Пиши по-русски, коротко, конкретно.`;
+
+  const userContent = [];
+  if (analyticsImgBase64) {
+    const [meta, data] = analyticsImgBase64.split(',');
+    const mime = meta.match(/:(.*?);/)[1];
+    userContent.push({ type: 'image', source: { type: 'base64', media_type: mime, data } });
+  }
+  userContent.push({ type: 'text', text: `Вот результаты за сегодня${userText ? ':\n' + userText : '.'}\n\nОцени день: хорошо или плохо? Что конкретно сработало или не сработало? Что делать завтра?` });
+
+  const resultBox = document.getElementById('analyticsResult');
+  resultBox.style.display = 'none';
+  resultBox.textContent = '';
+
+  try {
+    let result = '';
+
+    if (provider === 'anthropic') {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: PROVIDERS.anthropic.model,
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userContent }],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error?.message || res.status);
+      result = data?.content?.[0]?.text || '';
+    } else {
+      // OpenRouter — gemini supports vision
+      const msgs = [{ role: 'system', content: systemPrompt }];
+      const orContent = [];
+      if (analyticsImgBase64) orContent.push({ type: 'image_url', image_url: { url: analyticsImgBase64 } });
+      orContent.push({ type: 'text', text: userContent[userContent.length - 1].text });
+      msgs.push({ role: 'user', content: orContent });
+      result = await callOpenRouter(apiKey, PROVIDERS[provider].model, msgs, 1000);
+    }
+
+    resultBox.textContent = result;
+    resultBox.style.display = 'block';
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) {
+    resultBox.textContent = 'ошибка: ' + e.message;
+    resultBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
 }
 
 // ──────────────────────────────────────────
