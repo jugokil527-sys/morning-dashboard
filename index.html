@@ -439,6 +439,16 @@
   .post-card {
     background: var(--surface);
     border: 1px solid var(--border);
+    transition: opacity 0.2s;
+  }
+
+  .post-card.post-used {
+    opacity: 0.45;
+  }
+
+  .used-btn.used-active {
+    color: #4caf7d;
+    border-color: #4caf7d;
   }
 
   .post-card-header {
@@ -907,8 +917,22 @@ const POST_TIMES = ['9:00–11:00 UTC', '13:00–15:00 UTC'];
 
 let checkState = {};
 const POSTS_KEY = `posts_${TODAY}`;
+const USED_KEY = `posts_used_${TODAY}`;
 const ARCHIVE_KEY = 'posts_archive';
 const PROFILE_KEY = 'user_profile';
+
+let usedPosts = new Set();
+
+function loadUsed() {
+  try {
+    const stored = localStorage.getItem(USED_KEY);
+    if (stored) usedPosts = new Set(JSON.parse(stored));
+  } catch(e) { usedPosts = new Set(); }
+}
+
+function saveUsed() {
+  localStorage.setItem(USED_KEY, JSON.stringify([...usedPosts]));
+}
 
 // stores original EN text while translated version is shown
 const translatedOriginals = {};
@@ -937,6 +961,7 @@ function init() {
   setDate();
   archiveOldPosts();
   loadPosts();
+  loadUsed();
   loadCheckState();
   renderChecklist();
   renderStats();
@@ -1304,8 +1329,9 @@ function renderPosts() {
 
 function buildPostCard(text, idx) {
   const timeHint = POST_TIMES[idx] || '';
+  const isUsed = usedPosts.has(idx);
   const card = document.createElement('div');
-  card.className = 'post-card';
+  card.className = 'post-card' + (isUsed ? ' post-used' : '');
   card.innerHTML = `
     <div class="post-card-header">
       <div class="post-card-title">пост ${idx + 1}</div>
@@ -1315,6 +1341,7 @@ function buildPostCard(text, idx) {
     <div class="post-card-footer">
       <span class="char-count" id="charCount${idx}"></span>
       <div style="display:flex;gap:6px;">
+        <button class="copy-btn used-btn${isUsed ? ' used-active' : ''}" id="usedBtn${idx}">${isUsed ? '✓ used' : 'used'}</button>
         <button class="copy-btn" id="editToggleBtn${idx}">редактировать</button>
         <button class="copy-btn" id="translateBtn${idx}">RU</button>
         <button class="copy-btn" id="copyBtn${idx}">копировать</button>
@@ -1363,6 +1390,23 @@ function buildPostCard(text, idx) {
   });
   editApplyBtn.addEventListener('click', () => editPost(idx));
   editInput.addEventListener('keydown', e => { if (e.key === 'Enter') editPost(idx); });
+
+  // used btn
+  const usedBtn = card.querySelector(`#usedBtn${idx}`);
+  usedBtn.addEventListener('click', () => {
+    if (usedPosts.has(idx)) {
+      usedPosts.delete(idx);
+      usedBtn.textContent = 'used';
+      usedBtn.classList.remove('used-active');
+      card.classList.remove('post-used');
+    } else {
+      usedPosts.add(idx);
+      usedBtn.textContent = '✓ used';
+      usedBtn.classList.add('used-active');
+      card.classList.add('post-used');
+    }
+    saveUsed();
+  });
 
   // translate btn
   const translateBtn = card.querySelector(`#translateBtn${idx}`);
