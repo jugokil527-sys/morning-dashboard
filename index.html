@@ -2255,26 +2255,35 @@ async function handleAnalytics() {
 function pickVisualQuery(postText) {
   const text = postText.toLowerCase();
 
-  const presets = [
-    { q: 'glitch digital error screen',          keys: ['error', 'bug', 'fail', 'crash', 'broken', 'debug', 'code', 'agent', 'ai', 'model'] },
-    { q: 'dark neon typography poster',          keys: ['build', 'ship', 'launch', 'product', 'tool', 'system', 'workflow'] },
-    { q: 'film grain night city blur',           keys: ['night', 'city', 'street', 'late', 'morning', 'dark', 'sleep'] },
-    { q: 'surreal cinematic lone figure',        keys: ['alone', 'lost', 'think', 'realize', 'notice', 'found', 'discover'] },
-    { q: 'bold experimental typography grain',   keys: ['write', 'post', 'content', 'tweet', 'words', 'text', 'idea'] },
-    { q: 'human robot surreal everyday',         keys: ['robot', 'machine', 'automat', 'replac', 'human', 'people', 'agent'] },
-    { q: 'analog film street documentary',       keys: ['test', 'tried', 'experiment', 'week', 'day', 'habit', 'routine'] },
-    { q: 'dark moody neon room interior',        keys: ['work', 'desk', 'focus', 'studio', 'home', 'setup', 'morning'] },
-    { q: 'motion blur protest energy crowd',     keys: ['crypto', 'market', 'price', 'trade', 'money', 'fast', 'move'] },
-    { q: 'editorial abstract graphic design',    keys: ['research', 'data', 'analysis', 'report', 'find', 'result'] },
-  ];
+  // extract 2-3 meaningful words from post (skip stopwords)
+  const stopwords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','this','that','is','are','was','were','be','been','have','has','had','do','did','not','it','its','i','you','we','they','he','she','my','your','our','their','so','just','like','from','as','up','out','if','then','than','when','what','how','who','can','will','would','could','should','more','some','all','also','one','two','about','into','over','after','before','been','only','very','even','back','still','going','get','got','go','made','make','used','use','way','day','time','week','s','t','m','re','ll','ve']);
 
-  let best = presets[0];
-  let bestScore = 0;
-  for (const p of presets) {
-    const score = p.keys.filter(k => text.includes(k)).length;
-    if (score > bestScore) { bestScore = score; best = p; }
+  const words = text.match(/\b[a-z]{4,}\b/g) || [];
+  const meaningful = [...new Set(words.filter(w => !stopwords.has(w)))].slice(0, 3);
+
+  // vibe modifiers from your aesthetic
+  const vibes = [
+    'dark cinematic film grain',
+    'neon moody editorial',
+    'surreal analog photography',
+    'glitch digital dark',
+    'bold graphic noir',
+  ];
+  const vibe = vibes[Math.floor(Math.random() * vibes.length)];
+
+  if (meaningful.length >= 2) {
+    return `${meaningful.slice(0,2).join(' ')} ${vibe}`;
   }
-  return best.q;
+
+  // fallback presets if post is too short
+  const fallbacks = [
+    'dark neon typography poster',
+    'film grain night city blur',
+    'surreal cinematic lone figure',
+    'glitch digital screen dark',
+    'analog street documentary moody',
+  ];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 }
 async function handleVisualSearch() {
   const key = localStorage.getItem('unsplash_key') || '';
